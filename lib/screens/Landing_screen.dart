@@ -7,25 +7,23 @@ class LandingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      body: Container(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-    
             Column(
               children: [
-                const SizedBox(height: 20),
-
-
+                const SizedBox(height: 10),
                 Center(
                   child: Image.asset(
                     "assets/images/novacane.png",
-                    height:100 , 
-                    fit: BoxFit.contain,
+                    height:150 , 
+                    width: double.infinity,
+                  
                   ),
                 ),
 
-                const SizedBox(height: 12),
+              
 
                 const Text(
                   "Welcome to your safe space",
@@ -38,18 +36,19 @@ class LandingScreen extends StatelessWidget {
             ),
 
     
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 20),
-            //   child: Image.asset(
-            //     "", 
-            //     height: 260,
-            //     fit: BoxFit.contain,
-            //   ),
-            // ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Image.asset(
+                    "assets/images/landd.png",
+                height: 300,
+                width: double.maxFinite,
+                fit: BoxFit.contain,
+              ),
+            ),
 
        
             Padding(
-              padding: const EdgeInsets.only(bottom: 40),
+              padding:const EdgeInsets.all(60),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
