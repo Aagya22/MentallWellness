@@ -10,7 +10,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/RegisterScreen',
+      initialRoute: '/LandingScreen',
       routes:{
         '/SplashScreen': (context) => const SplashScreen(),
         '/LandingScreen':(context)=> const LandingScreen(),

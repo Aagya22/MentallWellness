@@ -13,34 +13,24 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-               SizedBox(height: 30),
-
+              const SizedBox(height: 30),
               Center(
                 child: Image.asset(
                   "assets/images/novacane.png",
                   height: 90,
                 ),
               ),
-
-              SizedBox(height: 30),
-              Text(
+              const SizedBox(height: 30),
+              const Text(
                 "Welcome back",
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 6),
-              Text(
+              const SizedBox(height: 6),
+              const Text(
                 "sign in to access your account",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
-
-              SizedBox(height: 30),
-
+              const SizedBox(height: 30),
               TextFormField(
                 decoration: InputDecoration(
                   hintText: "Enter your email",
@@ -53,9 +43,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              SizedBox(height: 15),
-
+              const SizedBox(height: 15),
               TextFormField(
                 obscureText: true,
                 decoration: InputDecoration(
@@ -69,76 +57,51 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      Checkbox(
-                        value: false,
-                        onChanged: (v) {},
-                        visualDensity: VisualDensity.compact,
-                      ),
-                       Text(
-                        "Remember me",
-                        style: TextStyle(fontSize: 13),
-                      ),
+                      Checkbox(value: false, onChanged: (v) {}),
+                      const Text("Remember me", style: TextStyle(fontSize: 13)),
                     ],
                   ),
                   TextButton(
                     onPressed: () {},
-                    child: Text(
-                      "Forgot password ?",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.red,
-                      ),
-                    ),
+                    child: const Text("Forgot password ?", style: TextStyle(fontSize: 13, color: Colors.red)),
                   ),
                 ],
               ),
-
-            SizedBox(height: 20),
+              const SizedBox(height: 20),
               SizedBox(
                 width: 160,
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade900,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: () {},
-                  child: const Text(
-                    "Login",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/dashboard');
+                  },
+                  child: const Text("Login", style: TextStyle(fontSize: 16)),
                 ),
               ),
-
-              SizedBox(height: 30),
-
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text("New member ? "),
                   GestureDetector(
-                    onTap: () {},
-                    child: Text(
-                      "Register now",
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onTap: () {
+                      Navigator.pushNamed(context, '/register');
+                    },
+                    child: const Text("Register now", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
-
-               SizedBox(height: 40),
+              const SizedBox(height: 40),
             ],
           ),
         ),
