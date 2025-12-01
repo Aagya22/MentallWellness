@@ -13,7 +13,7 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 30),
+               SizedBox(height: 30),
 
               Center(
                 child: Image.asset(
@@ -71,7 +71,6 @@ class LoginScreen extends StatelessWidget {
               ),
 
               SizedBox(height: 10),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -82,7 +81,7 @@ class LoginScreen extends StatelessWidget {
                         onChanged: (v) {},
                         visualDensity: VisualDensity.compact,
                       ),
-                      const Text(
+                       Text(
                         "Remember me",
                         style: TextStyle(fontSize: 13),
                       ),
@@ -90,7 +89,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () {},
-                    child: const Text(
+                    child: Text(
                       "Forgot password ?",
                       style: TextStyle(
                         fontSize: 13,
@@ -128,7 +127,7 @@ class LoginScreen extends StatelessWidget {
                   const Text("New member ? "),
                   GestureDetector(
                     onTap: () {},
-                    child: const Text(
+                    child: Text(
                       "Register now",
                       style: TextStyle(
                         color: Colors.red,
