@@ -3,6 +3,7 @@ import 'package:mentalwellness/screens/Landing_screen.dart';
 import 'package:mentalwellness/screens/Login_screen.dart';
 import 'package:mentalwellness/screens/Register_screen.dart';
 import 'package:mentalwellness/screens/Splash_screen.dart';
+import 'package:mentalwellness/screens/dashboard_screen.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -16,6 +17,7 @@ class App extends StatelessWidget {
         '/LandingScreen':(context)=> const LandingScreen(),
         '/LoginScreen':(context)=>const LoginScreen(),
         '/RegisterScreen':(context)=>const RegisterScreen(),
+        '/DashboardScreen':(context)=>const DashboardScreen(),
 
 
       }

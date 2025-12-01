@@ -21,15 +21,9 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              const Text(
-                "Welcome back",
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              ),
+              const Text("Welcome back", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
-              const Text(
-                "sign in to access your account",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
+              const Text("sign in to access your account", style: TextStyle(fontSize: 14, color: Colors.grey)),
               const SizedBox(height: 30),
               TextFormField(
                 decoration: InputDecoration(
@@ -37,10 +31,7 @@ class LoginScreen extends StatelessWidget {
                   filled: true,
                   fillColor: const Color(0xffEFEDE7),
                   suffixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 15),
@@ -51,10 +42,7 @@ class LoginScreen extends StatelessWidget {
                   filled: true,
                   fillColor: const Color(0xffEFEDE7),
                   suffixIcon: const Icon(Icons.visibility_off_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 10),
@@ -83,7 +71,7 @@ class LoginScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/dashboard');
+                    Navigator.pushReplacementNamed(context, '/DashboardScreen');
                   },
                   child: const Text("Login", style: TextStyle(fontSize: 16)),
                 ),
@@ -95,7 +83,7 @@ class LoginScreen extends StatelessWidget {
                   const Text("New member ? "),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, '/register');
+                      Navigator.pushNamed(context, '/RegisterScreen');
                     },
                     child: const Text("Register now", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ),
