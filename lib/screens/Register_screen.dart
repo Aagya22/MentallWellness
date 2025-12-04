@@ -159,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             message: "Registration Successful!",
                             color: Colors.green);
                         Navigator.pushReplacementNamed(
-                            context, '/DashboardScreen');
+                            context, '/LoginScreen');
                       } else {
                         showMySnackBar(
                             context: context,
@@ -181,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Navigator.pushNamed(context, '/LoginScreen');
                       },
                       child: const Text(
-                        "Login in",
+                        "Login",
                         style: TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
