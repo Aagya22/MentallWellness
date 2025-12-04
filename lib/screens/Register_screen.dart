@@ -5,19 +5,16 @@ class RegisterScreen extends StatefulWidget {
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
-  
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-
 
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +29,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 20),
-
-                // Logo
                 Center(
                   child: Image.asset("assets/images/novacane.png", height: 100),
                 ),
-
                 const SizedBox(height: 25),
                 const Text(
                   "Get Started",
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 30),
-
-     
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -66,8 +58,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-
-        
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -81,19 +71,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   validator: (value) {
-                if (value == null || value.isEmpty) {
-                return "Email is required";
-                }
-                if (!value.contains('@')) {
-                return "Enter a valid email";
-             }
-             return null;
-         },
-
-           ),
+                    if (value == null || value.isEmpty) {
+                      return "Email is required";
+                    }
+                    if (!value.contains('@')) {
+                      return "Enter a valid email";
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 15),
-
-              
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
@@ -118,47 +105,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-
-   
                 TextFormField(
-              controller: _passwordController,
-              obscureText: !_isPasswordVisible,
-              decoration: InputDecoration(
-              hintText: "Strong password",
-             filled: true,
-             fillColor: const Color(0xffEFEDE7),
-             suffixIcon: IconButton(
-            icon: Icon(
-             _isPasswordVisible
-            ? Icons.visibility_outlined
-            : Icons.visibility_off_outlined,
-           ),
-           onPressed: () {
-          setState(() {
-          _isPasswordVisible = !_isPasswordVisible; 
-        });
-      },
-    ),
-      border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-     ),
-     ),
-    validator: (value) {
-    if (value == null || value.isEmpty) {
-      return "Password is required";
-    }
-    if (value.length < 6) {
-      return "Password must be at least 6 characters";
-    }
-    return null;
-    },
-    ),
-
-
-    const SizedBox(height: 25),
-
-         SizedBox(
+                  controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    hintText: "Strong password",
+                    filled: true,
+                    fillColor: const Color(0xffEFEDE7),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Password is required";
+                    }
+                    if (value.length < 6) {
+                      return "Password must be at least 6 characters";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 25),
+                SizedBox(
                   width: 160,
                   height: 48,
                   child: ElevatedButton(
@@ -176,17 +158,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             content: Text("Registration Successful!"),
                           ),
                         );
-
                         Navigator.pushReplacementNamed(
                             context, '/DashboardScreen');
                       }
                     },
-                    child: const Text("Register", style: TextStyle(fontSize: 16)),
+                    child:
+                        const Text("Register", style: TextStyle(fontSize: 16)),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -205,7 +185,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 40),
               ],
             ),
