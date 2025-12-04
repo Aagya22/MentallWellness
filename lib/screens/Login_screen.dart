@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mentalwellness/common/mysnack_bar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,14 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 30),
-
                 Center(
                   child: Image.asset(
                     "assets/images/novacane.png",
                     height: 90,
                   ),
                 ),
-
                 const SizedBox(height: 30),
                 const Text("Welcome back",
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
@@ -43,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text("sign in to access your account",
                     style: TextStyle(fontSize: 14, color: Colors.grey)),
                 const SizedBox(height: 30),
-
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -65,9 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 15),
-
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -101,9 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 10),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -120,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text("Remember me", style: TextStyle(fontSize: 13)),
                       ],
                     ),
-
                     TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/ForgotpasswordScreen');
@@ -130,7 +123,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 20),
                 SizedBox(
                   width: 160,
@@ -145,18 +137,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         if (_rememberMe) {
-                          print("User selected: Remember me");
+                          showMySnackBar(
+                              context: context,
+                              message: "Remember me selected",
+                              color: Colors.orange);
                         }
+                        showMySnackBar(
+                            context: context,
+                            message: "Login Successful",
+                            color: Colors.green);
                         Navigator.pushReplacementNamed(
                             context, '/DashboardScreen');
+                      } else {
+                        showMySnackBar(
+                            context: context,
+                            message: "Please fill all required fields",
+                            color: Colors.red);
                       }
                     },
                     child: const Text("Login", style: TextStyle(fontSize: 16)),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -171,7 +173,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 40),
               ],
             ),

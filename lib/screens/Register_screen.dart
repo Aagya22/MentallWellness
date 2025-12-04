@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mentalwellness/common/mysnack_bar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -153,13 +154,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Registration Successful!"),
-                          ),
-                        );
+                        showMySnackBar(
+                            context: context,
+                            message: "Registration Successful!",
+                            color: Colors.green);
                         Navigator.pushReplacementNamed(
                             context, '/DashboardScreen');
+                      } else {
+                        showMySnackBar(
+                            context: context,
+                            message: "Please fill all required fields",
+                            color: Colors.red);
                       }
                     },
                     child:
