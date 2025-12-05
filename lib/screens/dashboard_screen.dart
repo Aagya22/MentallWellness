@@ -10,6 +10,7 @@ class DashboardScreen extends StatelessWidget {
         title: const Text('Dashboard Screen'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
+      body: Text('Welcome to the Dashboard Screen!'),
     
       
     );
