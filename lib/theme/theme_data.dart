@@ -52,43 +52,21 @@ ThemeData getApplicationTheme() {
         color: Colors.grey,
       ),
     ),
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: Colors.pink,
+   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFFB71C1C),
       elevation: 0,
-       type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.black54,
-      selectedLabelStyle: TextStyle(
-        fontFamily: 'Playfair Regular',
-        fontSize: 14, 
-        fontWeight: FontWeight.w600,
-    //     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-    //   elevation: 0,
-    //   type: BottomNavigationBarType.fixed,
-
-    //   selectedItemColor: Color.fromARGB(255, 245, 232, 114),
-    //   unselectedItemColor: Color.fromARGB(255, 255, 255, 255),
-
-    //   selectedIconTheme: IconThemeData(size: 32),
-    //   unselectedIconTheme: IconThemeData(size: 28),
-
-    //   selectedLabelStyle: TextStyle(
-    //     fontSize: 15,
-    //     fontWeight: FontWeight.w600,
-    //     letterSpacing: 0.2,
-    //   ),
-    //   unselectedLabelStyle: TextStyle(
-    //     fontSize: 12,
-    //     fontWeight: FontWeight.w500,
-    //   ),
-
-    //   showSelectedLabels: true,
-    //   showUnselectedLabels: true,
-    // ),
-      ),
+      selectedItemColor: Colors.transparent,
+      unselectedItemColor: Colors.white,
+      selectedIconTheme: IconThemeData(size: 28),
+      unselectedIconTheme: IconThemeData(size: 28),
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
+      type: BottomNavigationBarType.fixed,
     ),
   );
 }
+
+ 
        
         
     

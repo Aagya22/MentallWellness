@@ -12,47 +12,89 @@ class BottomNavigationScreen extends StatefulWidget {
 }
 
 class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
-int _selectedIndex=0;
+  int _selectedIndex = 0;
 
-  List<Widget> lstBottomScreen=[
-    const HomeScreen (),
+  final List<Widget> lstBottomScreen = [
+    const HomeScreen(),
     const CalendarScreen(),
     const TimerScreen(),
     const ProfileScreen(),
   ];
 
+  final List<IconData> _icons = [
+    Icons.home,
+    Icons.calendar_today,
+    Icons.timer,
+    Icons.person,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('DashboardScreen'),
-        centerTitle: true,
-      ),
       body: lstBottomScreen[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: const[
-          BottomNavigationBarItem(
-            icon:Icon(Icons.home),
-           label: 'Home'),
-           BottomNavigationBarItem(icon: Icon(Icons.calendar_today),
-           label: 'Calendar',
-           ),
-          BottomNavigationBarItem(
-            icon:Icon(Icons.timer),
-           label: 'Timer'),
-           BottomNavigationBarItem(
-            icon:Icon(Icons.person),
-           label: 'Profile'),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: (index){
-          setState(() {
-            _selectedIndex=index;
-          });
-        },
-      ),
 
+      bottomNavigationBar: SizedBox(
+        height: 65, 
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              height: 65,
+              color: const Color(0xFFB71C1C),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(4, (index) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                    },
+                    child: Icon(
+                      _icons[index],
+                      size: 28,
+                      color: _selectedIndex == index
+                          ? Colors.transparent
+                          : Colors.white,
+                    ),
+                  );
+                }),
+              ),
+            ),
+
+            Positioned(
+              left: _getSelectedIconPosition(context),
+              top: -25,
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _icons[_selectedIndex],
+                  color: Colors.black,
+                  size: 30,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  double _getSelectedIconPosition(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final double itemWidth = width / 4;
+    return itemWidth * _selectedIndex + itemWidth / 2 - 30;
   }
 }
