@@ -3,10 +3,12 @@ import 'package:mentalwellness/screens/Landing_screen.dart';
 import 'package:mentalwellness/screens/Login_screen.dart';
 import 'package:mentalwellness/screens/Register_screen.dart';
 import 'package:mentalwellness/screens/Splash_screen.dart';
+import 'package:mentalwellness/screens/botton_navigation_screen.dart';
 import 'package:mentalwellness/screens/dashboard_screen.dart';
 import 'package:mentalwellness/screens/onboarding2nd_screen.dart';
 import 'package:mentalwellness/screens/onboarding3rd_screen.dart';
 import 'package:mentalwellness/screens/onboardingfirst_screen.dart';
+import 'package:mentalwellness/theme/theme_data.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -14,7 +16,10 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/SplashScreen',
+      debugShowCheckedModeBanner: false,
+      theme:getApplicationTheme(
+      ),
+      initialRoute: '/BottomNavigationScreen',
       routes:{
         '/SplashScreen': (context) => const SplashScreen(),
         '/OnboardingfirstScreen': (context) => const OnboardingfirstScreen(),
@@ -24,7 +29,7 @@ class App extends StatelessWidget {
         '/LoginScreen':(context)=>const LoginScreen(),
         '/RegisterScreen':(context)=>const RegisterScreen(),
         '/DashboardScreen':(context)=>const DashboardScreen(),
-
+        '/BottomNavigationScreen':(context)=>const BottomNavigationScreen(),
 
       }
     );
