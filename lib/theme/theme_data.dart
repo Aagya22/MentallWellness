@@ -53,7 +53,7 @@ ThemeData getApplicationTheme() {
       ),
     ),
    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFFB71C1C),
+      backgroundColor: Color.fromARGB(255, 31, 14, 14),
       elevation: 0,
       selectedItemColor: Colors.transparent,
       unselectedItemColor: Colors.white,
