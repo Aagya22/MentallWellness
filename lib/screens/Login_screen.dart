@@ -128,12 +128,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 160,
                   height: 48,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade900,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
+                    // style: ElevatedButton.styleFrom(
+                    //   backgroundColor: Colors.green.shade900,
+                    //   foregroundColor: Colors.white,
+                    //   shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(8)),
+                    // ),
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         if (_rememberMe) {
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             message: "Login Successful",
                             color: Colors.green);
                         Navigator.pushReplacementNamed(
-                            context, '/DashboardScreen');
+                            context, '/BottomNavigationScreen');
                       } else {
                         showMySnackBar(
                             context: context,
