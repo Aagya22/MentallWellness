@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mentalwellness/widgets/home_topbar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,27 +17,13 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: 
+          children: const
           [
-            _topBar()
+            HomeTopBar()
             
           ]
         ),
       )),
     );
-  }
-  Widget _topBar(){
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Row(
-        children: [CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.white,
-              child: const Icon(Icons.face_2, color: Colors.black),
-            ),],
-    )
-    ],
-  );
   }
 }

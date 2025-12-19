@@ -19,7 +19,7 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme:getApplicationTheme(
       ),
-      initialRoute: '/BottomNavigationScreen',
+      initialRoute: '/SplashScreen',
       routes:{
         '/SplashScreen': (context) => const SplashScreen(),
         '/OnboardingfirstScreen': (context) => const OnboardingfirstScreen(),

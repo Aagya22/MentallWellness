@@ -2,71 +2,74 @@ import 'package:flutter/material.dart';
 
 ThemeData getApplicationTheme() {
   return ThemeData(
-        primarySwatch: Colors.deepOrange,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: false,
-        fontFamily: ' Bold',
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.lightBlueAccent,
-          titleTextStyle: TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
-            fontSize: 20,
-            color: Colors.black
-          ),
+    useMaterial3: false,
+
+    fontFamily: 'Inter Regular',
+
+    primarySwatch: Colors.deepOrange,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+    ),
+
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.lightBlueAccent,
+      titleTextStyle: TextStyle(
+        fontFamily: 'Inter Bold',
+        fontSize: 20,
+        color: Colors.black,
+      ),
+    ),
+
+    textTheme: const TextTheme(
+      bodyLarge: TextStyle(
+        fontFamily: 'Inter Regular',
+      ),
+      bodyMedium: TextStyle(
+        fontFamily: 'Inter Regular',
+      ),
+      titleLarge: TextStyle(
+        fontFamily: 'Inter Bold',
+      ),
+    ),
+
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        textStyle: const TextStyle(
+          fontFamily: 'Inter Bold',
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style:ElevatedButton.styleFrom(
-            textStyle: const TextStyle(
-              fontSize: 16,
-              color:Colors.white,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'PlayfairDisplay Regular'
-            ),
-            backgroundColor:Color(0xFF694c4a),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            )
-          )
-        ),     
-      inputDecorationTheme: InputDecorationTheme(
+        backgroundColor: Colors.green.shade900,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8)),
+      ),
+    ),
+
+    inputDecorationTheme: InputDecorationTheme(
+      labelStyle: const TextStyle(
+        fontFamily: 'Inter Regular',
+        fontSize: 16,
+      ),
+      hintStyle: const TextStyle(
+        fontFamily: 'Inter Medium',
+        fontSize: 14,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.grey),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      labelStyle: TextStyle(
-        fontFamily: 'Playfair Regular',
-        fontSize: 16,
-        color: Colors.black,
-      ),
-      hintStyle: TextStyle(
-        fontFamily: 'Playfair Regular',
-        fontSize: 14,
-        color: Colors.grey,
-      ),
     ),
-   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color.fromARGB(255, 31, 14, 14),
-      elevation: 0,
-      selectedItemColor: Colors.transparent,
+
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFFB71C1C),
+      selectedItemColor: Colors.black,
       unselectedItemColor: Colors.white,
-      selectedIconTheme: IconThemeData(size: 28),
-      unselectedIconTheme: IconThemeData(size: 28),
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
-      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(
+        fontFamily: 'Inter Bold',
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+      elevation: 8,
     ),
   );
 }
-
- 
-       
-        
-    

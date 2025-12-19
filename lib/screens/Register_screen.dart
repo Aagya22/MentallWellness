@@ -146,11 +146,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade900,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      // backgroundColor: Colors.green.shade900,
+                      // foregroundColor: Colors.white,
+                      // shape: RoundedRectangleBorder(
+                      //   borderRadius: BorderRadius.circular(12),
+                      // ),
                     ),
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
