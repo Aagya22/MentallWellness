@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentalwellness/screens/Landing_screen.dart';
+import 'package:mentalwellness/features/landing/presentation/pages/Landing_screen.dart';
 
 
 class Onboarding3rdScreen extends StatelessWidget {

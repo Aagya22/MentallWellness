@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mentalwellness/screens/botton_screen/calendar_screen.dart';
-import 'package:mentalwellness/screens/botton_screen/home_screen.dart';
-import 'package:mentalwellness/screens/botton_screen/profile_screen.dart';
-import 'package:mentalwellness/screens/botton_screen/timer_screen.dart';
+import 'package:mentalwellness/features/dashboard/presentation/pages/calendar_screen.dart';
+import 'package:mentalwellness/features/dashboard/presentation/pages/home_screen.dart';
+import 'package:mentalwellness/features/dashboard/presentation/pages/profile_screen.dart';
+import 'package:mentalwellness/features/dashboard/presentation/pages/timer_screen.dart';
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});
