@@ -5,9 +5,9 @@ import 'package:mentalwellness/screens/Register_screen.dart';
 import 'package:mentalwellness/screens/Splash_screen.dart';
 import 'package:mentalwellness/screens/botton_navigation_screen.dart';
 import 'package:mentalwellness/screens/dashboard_screen.dart';
-import 'package:mentalwellness/screens/onboarding2nd_screen.dart';
-import 'package:mentalwellness/screens/onboarding3rd_screen.dart';
-import 'package:mentalwellness/screens/onboardingfirst_screen.dart';
+import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding2nd_screen.dart';
+import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding3rd_screen.dart';
+import 'package:mentalwellness/features/onboarding/presentation/pages/onboardingfirst_screen.dart';
 import 'package:mentalwellness/theme/theme_data.dart';
 
 class App extends StatelessWidget {
