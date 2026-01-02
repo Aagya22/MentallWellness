@@ -20,19 +20,19 @@ class AuthViewModel extends Notifier<AuthState> {
 
   @override
   AuthState build() {
-    // Initializing use cases from their respective providers
+
     _registerUseCase = ref.read(registerUsecaseProvider);
     _loginUseCase = ref.read(loginUseCaseProvider);
     _getCurrentUserUseCase = ref.read(getCurrentUserUseCaseProvider);
     _logoutUseCase = ref.read(logoutUsecaseProvider);
 
-    // Check for existing session on build
+
     Future.microtask(() => getCurrentUser());
 
     return const AuthState();
   }
 
-  /// Handles user registration
+
   Future<void> register(AuthEntity user) async {
     state = state.copyWith(status: AuthStatus.loading);
 
@@ -55,7 +55,7 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  /// Handles user login
+  
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(status: AuthStatus.loading);
 

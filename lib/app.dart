@@ -7,7 +7,7 @@ import 'package:mentalwellness/features/dashboard/presentation/pages/botton_navi
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding2nd_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding3rd_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboardingfirst_screen.dart';
-import 'package:mentalwellness/theme/theme_data.dart';
+import 'package:mentalwellness/app/theme/theme_data.dart';
 
 class App extends StatelessWidget {
   const App({super.key});

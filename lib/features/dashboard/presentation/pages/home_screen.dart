@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentalwellness/widgets/home_favouritesection.dart';
-import 'package:mentalwellness/widgets/home_topbar.dart';
+import 'package:mentalwellness/features/dashboard/widgets/home_favouritesection.dart';
+import 'package:mentalwellness/features/dashboard/widgets/home_topbar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
