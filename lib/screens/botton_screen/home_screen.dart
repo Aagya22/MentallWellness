@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mentalwellness/widgets/home_favouritesection.dart';
 import 'package:mentalwellness/widgets/home_topbar.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,8 +20,9 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const
           [
-            HomeTopBar()
-            
+            HomeTopBar(),
+            const SizedBox(height: 20),
+            HomeFavouritesection(),
           ]
         ),
       )),

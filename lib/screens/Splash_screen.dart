@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentalwellness/screens/onboardingfirst_screen.dart';
+import 'package:mentalwellness/features/onboarding/presentation/pages/onboardingfirst_screen.dart';
 import 'dart:async'; 
 
 class SplashScreen extends StatefulWidget {
