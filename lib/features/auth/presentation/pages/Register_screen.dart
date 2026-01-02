@@ -1,24 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/common/mysnack_bar.dart';
+import 'package:mentalwellness/features/auth/domain/entities/auth_entity.dart';
+import 'package:mentalwellness/features/auth/presentation/state/auth_state.dart';
+import 'package:mentalwellness/features/auth/presentation/view_model/auth_viewmodel.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController(); // Added username controller
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _isPasswordVisible = false;
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submitRegister() {
+    if (_formKey.currentState!.validate()) {
+      final user = AuthEntity(
+        fullName: _nameController.text.trim(),
+        username: _usernameController.text.trim(), // username is required
+        email: _emailController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      ref.read(authViewModelProvider.notifier).register(user);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      if (next.status == AuthStatus.registered) {
+        showMySnackBar(
+          context: context,
+          message: "Registration successful! Please login.",
+          color: Colors.green,
+        );
+        Navigator.pushReplacementNamed(context, '/LoginScreen');
+      } else if (next.status == AuthStatus.error) {
+        showMySnackBar(
+          context: context,
+          message: next.errorMessage ?? "Registration failed",
+          color: Colors.red,
+        );
+      }
+    });
+
+    final authState = ref.watch(authViewModelProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -31,7 +80,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const SizedBox(height: 20),
                 Center(
-                  child: Image.asset("assets/images/novacane.png", height: 100),
+                  child: Image.asset(
+                    "assets/images/novacane.png",
+                    height: 100,
+                  ),
                 ),
                 const SizedBox(height: 25),
                 const Text(
@@ -39,6 +91,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 30),
+
+                /// FULL NAME
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
@@ -51,14 +105,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Full name is required";
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty
+                          ? "Full name is required"
+                          : null,
                 ),
+
                 const SizedBox(height: 15),
+
+                /// USERNAME
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    hintText: "Username",
+                    filled: true,
+                    fillColor: const Color(0xffEFEDE7),
+                    suffixIcon: const Icon(Icons.alternate_email),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty
+                          ? "Username is required"
+                          : null,
+                ),
+
+                const SizedBox(height: 15),
+
+                /// EMAIL
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -81,7 +157,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 15),
+
+                /// PHONE
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
@@ -89,7 +168,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: "Phone number",
                     filled: true,
                     fillColor: const Color(0xffEFEDE7),
-                    suffixIcon: const Icon(Icons.phone_android_outlined),
+                    suffixIcon:
+                        const Icon(Icons.phone_android_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -105,7 +185,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 15),
+
+                /// PASSWORD
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -140,38 +223,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 25),
+
+                /// REGISTER BUTTON
                 SizedBox(
                   width: 160,
                   height: 48,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      // backgroundColor: Colors.green.shade900,
-                      // foregroundColor: Colors.white,
-                      // shape: RoundedRectangleBorder(
-                      //   borderRadius: BorderRadius.circular(12),
-                      // ),
+                    onPressed: authState.status == AuthStatus.loading
+                        ? null
+                        : _submitRegister,
+                    child: Text(
+                      authState.status == AuthStatus.loading
+                          ? "PLEASE WAIT..."
+                          : "Register",
+                      style: const TextStyle(fontSize: 16),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        showMySnackBar(
-                            context: context,
-                            message: "Registration Successful!",
-                            color: Colors.green);
-                        Navigator.pushReplacementNamed(
-                            context, '/LoginScreen');
-                      } else {
-                        showMySnackBar(
-                            context: context,
-                            message: "Please fill all required fields",
-                            color: Colors.red);
-                      }
-                    },
-                    child:
-                        const Text("Register", style: TextStyle(fontSize: 16)),
                   ),
                 ),
+
                 const SizedBox(height: 30),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -190,6 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 40),
               ],
             ),
