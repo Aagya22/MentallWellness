@@ -37,38 +37,58 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
 
   @override
   Future<AuthApiModel?> login(String email, String password) async {
-    final response = await _apiClient.post(
-      ApiEndpoints.userLogin,
-      data: {"email": email, "password": password},
-    );
-    if (response.data["success"] == true) {
-      final data = response.data["data"] as Map<String, dynamic>;
-      final user = AuthApiModel.fromJson(data);
-      // Save user session to SharedPreferences 
-      await _userSessionService.saveUserSession(
-        userId: user.id!,
-        email: user.email,
-        fullName: user.fullName,
-        username: user.username,
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.userLogin,
+        data: {"email": email, "password": password},
       );
-      return user;
-    } else {
-      return null;
+      if (response.data["success"] == true) {
+        final data = response.data["data"] as Map<String, dynamic>;
+        final user = AuthApiModel.fromJson(data);
+        // Save user session to SharedPreferences 
+        await _userSessionService.saveUserSession(
+          userId: user.id!,
+          email: user.email,
+          fullName: user.fullName,
+          username: user.username,
+          phoneNumber: user.phoneNumber,
+          profilePicture: user.profilePicture,
+        );
+        return user;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      // Re-throw to allow repository to handle and fallback to Hive
+      rethrow;
     }
   }
 
   @override
   Future<AuthApiModel> register(AuthApiModel user) async {
-    final response = await _apiClient.post(
-      ApiEndpoints.userRegister,
-      data: user.toJson(),
-    );
-    if (response.data["success"] == true) {
-      final data = response.data["data"] as Map<String, dynamic>;
-      final registeredUser = AuthApiModel.fromJson(data);
-      // Save user session to SharedPreferences : Pachi app restart vayo vani pani user logged in rahos
-      return registeredUser;
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.userRegister,
+        data: user.toJson(),
+      );
+      if (response.data["success"] == true) {
+        final data = response.data["data"] as Map<String, dynamic>;
+        final registeredUser = AuthApiModel.fromJson(data);
+        // Save user session to SharedPreferences
+        await _userSessionService.saveUserSession(
+          userId: registeredUser.id!,
+          email: registeredUser.email,
+          fullName: registeredUser.fullName,
+          username: registeredUser.username,
+          phoneNumber: registeredUser.phoneNumber,
+          profilePicture: registeredUser.profilePicture,
+        );
+        return registeredUser;
+      }
+      return user;
+    } catch (e) {
+      // Re-throw to allow repository to handle and fallback to Hive
+      rethrow;
     }
-    return user;
   }
 }

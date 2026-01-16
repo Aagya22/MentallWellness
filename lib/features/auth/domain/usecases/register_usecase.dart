@@ -13,6 +13,7 @@ class RegisterParams extends Equatable {
   final String email;
   final String username;
   final String password;
+  final String confirmPassword;
   final String? phoneNumber;
 
   const RegisterParams({
@@ -20,11 +21,12 @@ class RegisterParams extends Equatable {
     required this.email,
     required this.username,
     required this.password,
+    required this.confirmPassword,
     this.phoneNumber,
   });
 
   @override
-  List<Object?> get props => [fullName, email, username, password, phoneNumber];
+  List<Object?> get props => [fullName, email, username, password, confirmPassword, phoneNumber];
 }
 
 final registerUsecaseProvider = Provider<RegisterUseCase>((ref) {
@@ -45,7 +47,8 @@ class RegisterUseCase implements UsecaseWithParms<bool, RegisterParams> {
       email: params.email,
       username: params.username,
       password: params.password,
-      phoneNumber: params.phoneNumber,
+      phoneNumber: params.phoneNumber ?? '',
+      role: 'user', // Default role for new users
     );
 
     return _authRepository.register(authEntity);

@@ -42,6 +42,7 @@ class AuthViewModel extends Notifier<AuthState> {
         email: user.email,
         username: user.username,
         password: user.password!,
+        confirmPassword: user.password!,
         phoneNumber: user.phoneNumber,
       ),
     );
