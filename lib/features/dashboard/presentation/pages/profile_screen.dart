@@ -48,23 +48,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.dispose();
   }
 
-
-
   Future<bool> _requestPermission(Permission permission) async {
     final status = await permission.status;
-
     if (status.isGranted) return true;
-
-    if (status.isDenied) {
-      final result = await permission.request();
-      return result.isGranted;
-    }
-
+    if (status.isDenied) return (await permission.request()).isGranted;
     if (status.isPermanentlyDenied) {
       _showPermissionDeniedDialog();
       return false;
     }
-
     return false;
   }
 
@@ -73,14 +64,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Permission Required'),
-        content: const Text(
-          'Please allow permission from settings to continue.',
-        ),
+        content: const Text('Enable permission from settings to continue'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               openAppSettings();
@@ -93,53 +79,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
- 
-
   Future<void> _pickFromCamera() async {
-    final hasPermission = await _requestPermission(Permission.camera);
-    if (!hasPermission) return;
-
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-
-    if (image != null) {
-      setState(() => _pickedImage = image);
-    }
+    if (!await _requestPermission(Permission.camera)) return;
+    final image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    if (image != null) setState(() => _pickedImage = image);
   }
 
   Future<void> _pickFromGallery() async {
-    final hasPermission = await _requestPermission(
-      Platform.isAndroid ? Permission.photos : Permission.photos,
-    );
-    if (!hasPermission) return;
-
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-
-    if (image != null) {
-      setState(() => _pickedImage = image);
-    }
+    if (!await _requestPermission(Permission.photos)) return;
+    final image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (image != null) setState(() => _pickedImage = image);
   }
 
   void _showImagePickerSheet() {
     if (!_isEditing) return;
-
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Open Camera'),
+              title: const Text('Camera'),
               onTap: () {
                 Navigator.pop(context);
                 _pickFromCamera();
@@ -147,7 +110,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Open Gallery'),
+              title: const Text('Gallery'),
               onTap: () {
                 Navigator.pop(context);
                 _pickFromGallery();
@@ -159,113 +122,120 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-
-
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-
     final userSession = ref.read(userSessionServiceProvider);
-    final userId = userSession.getCurrentUserId() ?? 'local_user';
-
     await userSession.saveUserSession(
-      userId: userId,
+      userId: userSession.getCurrentUserId() ?? 'local_user',
       email: _emailCtrl.text.trim(),
       fullName: _nameCtrl.text.trim(),
       username: _usernameCtrl.text.trim(),
       phoneNumber: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       profilePicture: _pickedImage?.path,
     );
-
     setState(() => _isEditing = false);
-
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile updated')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
   }
 
-  /* ================= UI ================= */
+  void _logout() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final session = ref.read(userSessionServiceProvider);
+              await session.clearSession();
+              if (!mounted) return;
+              Navigator.pushReplacementNamed(context, '/LandingScreen');
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.close : Icons.edit),
-            onPressed: () => setState(() => _isEditing = !_isEditing),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _showImagePickerSheet,
-                child: CircleAvatar(
-                  radius: 54,
-                  backgroundColor: Colors.grey.shade200,
-                  backgroundImage: _pickedImage != null
-                      ? FileImage(File(_pickedImage!.path))
-                      : null,
-                  child: _pickedImage == null
-                      ? const Icon(Icons.camera_alt, size: 36, color: Colors.grey)
-                      : null,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Profile', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: Icon(_isEditing ? Icons.close : Icons.edit),
+                      onPressed: () => setState(() => _isEditing = !_isEditing),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              TextFormField(
-                controller: _nameCtrl,
-                enabled: _isEditing,
-                decoration: const InputDecoration(labelText: 'Full name'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter name' : null,
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _emailCtrl,
-                enabled: _isEditing,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (v) =>
-                    v == null || !v.contains('@') ? 'Invalid email' : null,
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _usernameCtrl,
-                enabled: _isEditing,
-                decoration: const InputDecoration(labelText: 'Username'),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _phoneCtrl,
-                enabled: _isEditing,
-                decoration: const InputDecoration(labelText: 'Phone number'),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.save),
-                      label: const Text('Save'),
-                      onPressed: _isEditing ? _saveProfile : null,
+                const SizedBox(height: 24),
+                Center(
+                  child: GestureDetector(
+                    onTap: _showImagePickerSheet,
+                    child: CircleAvatar(
+                      radius: 56,
+                      backgroundColor: Colors.grey.shade200,
+                      backgroundImage: _pickedImage != null ? FileImage(File(_pickedImage!.path)) : null,
+                      child: _pickedImage == null
+                          ? const Icon(Icons.camera_alt, size: 36, color: Colors.grey)
+                          : null,
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 32),
+                _field('Full Name', _nameCtrl),
+                _field('Email', _emailCtrl),
+                _field('Username', _usernameCtrl),
+                _field('Phone', _phoneCtrl, keyboard: TextInputType.phone),
+                const SizedBox(height: 30),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.save),
+                  label: const Text('Save Changes'),
+                  onPressed: _isEditing ? _saveProfile : null,
+                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Logout'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  onPressed: _logout,
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _field(String label, TextEditingController ctrl, {TextInputType? keyboard}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: ctrl,
+        enabled: _isEditing,
+        keyboardType: keyboard,
+        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        validator: (v) => v == null || v.isEmpty ? 'Required' : null,
       ),
     );
   }

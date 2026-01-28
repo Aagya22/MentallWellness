@@ -71,5 +71,4 @@ class AuthHiveModel extends HiveObject {
   }
 }
 
-// Run the build runner to generate the necessary files
 // Command: dart run build_runner clean
