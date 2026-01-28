@@ -36,7 +36,7 @@ class LandingScreen extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(60),
+            padding: const EdgeInsets.all(50),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
