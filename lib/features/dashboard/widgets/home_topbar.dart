@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 
 class HomeTopBar extends ConsumerWidget {
@@ -18,6 +19,7 @@ class HomeTopBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userSession = ref.watch(userSessionServiceProvider);
     final userName = userSession.getCurrentUserFullName() ?? 'User';
+    final profilePicture = userSession.getCurrentUserProfilePicture();
     final greeting = _getGreeting();
 
     return Row(
@@ -28,7 +30,12 @@ class HomeTopBar extends ConsumerWidget {
             CircleAvatar(
               radius: 18,
               backgroundColor: Colors.orangeAccent,
-              child: const Icon(Icons.face_2, color: Colors.black),
+              backgroundImage: profilePicture != null && profilePicture.isNotEmpty
+                  ? NetworkImage(ApiEndpoints.getImageUrl(profilePicture))
+                  : null,
+              child: profilePicture == null || profilePicture.isEmpty
+                  ? const Icon(Icons.face_2, color: Colors.black)
+                  : null,
             ),
             const SizedBox(width: 8),
             Text(
