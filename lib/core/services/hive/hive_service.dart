@@ -1,23 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mentalwellness/core/constants/hive_table_constant.dart';
-import 'package:mentalwellness/features/auth/data/models/auth_hive_model.dart'; 
+import 'package:mentalwellness/features/auth/data/models/auth_hive_model.dart';
 import 'package:path_provider/path_provider.dart';
-
-
 
 final hiveServiceProvider = Provider<HiveService>((ref) {
   return HiveService();
 });
 
 class HiveService {
-  // init
   Future<void> init() async {
     final directory = await getApplicationDocumentsDirectory();
     final path = '${directory.path}/${HiveTableConstant.dbName}';
     Hive.init(path);
-
-    // register adapter
     _registerAdapter();
     await _openBoxes();
   }
@@ -28,15 +23,12 @@ class HiveService {
     }
   }
 
-  // box open
   Future<void> _openBoxes() async {
     await Hive.openBox<AuthHiveModel>(HiveTableConstant.authTable);
   }
 
   Box<AuthHiveModel> get _authBox =>
       Hive.box<AuthHiveModel>(HiveTableConstant.authTable);
-
-  // ======================= Auth Queries =========================
 
   Future<void> register(AuthHiveModel user) async {
     await _authBox.put(user.authId, user);
@@ -47,7 +39,7 @@ class HiveService {
       return _authBox.values.firstWhere(
         (user) => user.email == email && user.password == password,
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -56,27 +48,59 @@ class HiveService {
     return _authBox.get(authId);
   }
 
-  bool isEmailRegistered(String email) {
-    return _authBox.values.any((user) => user.email == email);
-  }
-
   Future<AuthHiveModel?> getUserByEmail(String email) async {
     try {
       return _authBox.values.firstWhere((user) => user.email == email);
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
-  Future<bool> updateUser(AuthHiveModel user) async {
-    if (_authBox.containsKey(user.authId)) {
-      await _authBox.put(user.authId, user);
-      return true;
-    }
-    return false;
+  bool isEmailRegistered(String email) {
+    return _authBox.values.any((user) => user.email == email);
+  }
+
+  Future<bool> updateUser(AuthHiveModel newUser) async {
+    final existing = _authBox.get(newUser.authId);
+
+    if (existing == null) return false;
+
+    final mergedUser = AuthHiveModel(
+      authId: existing.authId,
+      fullName: newUser.fullName,
+      email: newUser.email,
+      phoneNumber: newUser.phoneNumber,
+      username: newUser.username,
+      password: newUser.password ?? existing.password,
+      profilePicture: newUser.profilePicture?.isNotEmpty == true
+          ? newUser.profilePicture
+          : existing.profilePicture,
+      role: newUser.role,
+    );
+
+    await _authBox.put(existing.authId, mergedUser);
+    return true;
   }
 
   Future<void> deleteUser(String authId) async {
     await _authBox.delete(authId);
+  }
+
+  Future<void> deleteProfilePicture(String authId) async {
+    final existing = _authBox.get(authId);
+    if (existing == null) return;
+
+    final updated = AuthHiveModel(
+      authId: existing.authId,
+      fullName: existing.fullName,
+      email: existing.email,
+      phoneNumber: existing.phoneNumber,
+      username: existing.username,
+      password: existing.password,
+      profilePicture: null,
+      role: existing.role,
+    );
+
+    await _authBox.put(authId, updated);
   }
 }

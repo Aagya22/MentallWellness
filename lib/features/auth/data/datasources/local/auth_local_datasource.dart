@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/core/services/hive/hive_service.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
-import 'package:mentalwellness/features/auth/data/datasources/remote/auth_datasource.dart';
+import 'package:mentalwellness/features/auth/data/datasources/auth_datasource.dart';
 import 'package:mentalwellness/features/auth/data/models/auth_hive_model.dart';
 
 // Create provider

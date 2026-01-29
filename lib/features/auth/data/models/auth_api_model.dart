@@ -21,7 +21,6 @@ class AuthApiModel {
     this.role,
   });
 
-  // fromJson
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
     return AuthApiModel(
       id: (json['id'] ?? json['_id']) as String?,
@@ -30,12 +29,11 @@ class AuthApiModel {
       phoneNumber: json['phoneNumber'] as String?,
       username: json['username'] as String,
       password: json['password'] as String?,
-      profilePicture: json['profilePicture'] as String?,
+      profilePicture: json['imageUrl'] as String?,
       role: json['role'] as String? ?? 'user',
     );
   }
 
-  // toJson
   Map<String, dynamic> toJson() {
     return {
       'fullName': fullName,
@@ -44,12 +42,11 @@ class AuthApiModel {
       'username': username,
       'password': password,
       'confirmPassword': password,
-      'profilePicture': profilePicture,
+      'imageUrl': profilePicture,
       'role': role ?? 'user',
     };
   }
 
-  // fromEntity
   factory AuthApiModel.fromEntity(AuthEntity entity) {
     return AuthApiModel(
       id: entity.authId,
@@ -63,7 +60,6 @@ class AuthApiModel {
     );
   }
 
-  // toEntity
   AuthEntity toEntity() {
     return AuthEntity(
       authId: id,
@@ -75,10 +71,5 @@ class AuthApiModel {
       profilePicture: profilePicture,
       role: role ?? 'user',
     );
-  }
-
-  // toEntityList
-  static List<AuthEntity> toEntityList(List<AuthApiModel> models) {
-    return models.map((model) => model.toEntity()).toList();
   }
 }
