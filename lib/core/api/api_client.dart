@@ -118,6 +118,19 @@ class ApiClient {
       options: options,
     );
   }
+
+  // Upload file
+  Future<Response> uploadFile(
+    String path, {
+    required FormData formData,
+    Options? options,
+  }) async {
+    return _dio.post(
+      path,
+      data: formData,
+      options: options ?? Options(contentType: 'multipart/form-data'),
+    );
+  }
 }
 
 class _AuthInterceptor extends Interceptor {
