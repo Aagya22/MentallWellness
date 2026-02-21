@@ -61,7 +61,7 @@ ThemeData getApplicationTheme() {
     ),
 
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFFB71C1C),
+      backgroundColor: Color.fromARGB(255, 6, 81, 9),
       selectedItemColor: Colors.black,
       unselectedItemColor: Colors.white,
       selectedLabelStyle: TextStyle(

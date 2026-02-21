@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/calendar_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/home_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/profile_screen.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/timer_screen.dart';
+
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});
@@ -18,7 +18,6 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     CalendarScreen(),
-    TimerScreen(),
     ProfileScreen(),
   ];
 
@@ -46,10 +45,7 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
             icon: Icon(Icons.calendar_today),
             label: 'Calendar',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.timer),
-            label: 'Timer',
-          ),
+         
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
