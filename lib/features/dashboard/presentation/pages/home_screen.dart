@@ -5,8 +5,8 @@ import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/calendar_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/exercise_screen.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/journal_screen.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/mood_screen.dart';
+import 'package:mentalwellness/features/journal/presentation/pages/journal_screen.dart';
+import 'package:mentalwellness/features/mood/presentation/pages/mood_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/reminders_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
