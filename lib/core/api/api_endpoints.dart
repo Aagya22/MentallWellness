@@ -6,8 +6,8 @@ class ApiEndpoints {
 ApiEndpoints._();
 
 
-static const bool isPhysicalDevice = false;
-static const String _ipAddress = '192.168.1.4';
+static const bool isPhysicalDevice = true;
+static const String _ipAddress = '192.168.1.5';
 static const int _port = 5050;
 
 
@@ -27,6 +27,16 @@ static const String user = '/api/auth';
 static const String userLogin = '/api/auth/login';
 static const String userRegister = '/api/auth/register';
 static const String userUpdateProfile = '/api/auth/update-profile';
+
+// Journals
+static const String journals = '/api/journals';
+
+// Moods
+static const String moods = '/api/moods';
+static const String moodsOverview = '/api/moods/overview';
+static const String moodsAnalytics = '/api/moods/analytics';
+static const String moodsByDate = '/api/moods/by-date';
+static const String moodsRange = '/api/moods/range';
 
 
 static String getImageUrl(String? imagePath) {
