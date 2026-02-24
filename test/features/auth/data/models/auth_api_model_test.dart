@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mentalwellness/features/auth/data/models/auth_api_model.dart';
-import 'package:mentalwellness/features/auth/domain/entities/auth_entity.dart';
 
 void main() {
 

@@ -6,7 +6,7 @@ class ApiEndpoints {
 ApiEndpoints._();
 
 
-static const bool isPhysicalDevice = true;
+static const bool isPhysicalDevice = false;
 static const String _ipAddress = '192.168.1.5';
 static const int _port = 5050;
 
@@ -37,6 +37,14 @@ static const String moodsOverview = '/api/moods/overview';
 static const String moodsAnalytics = '/api/moods/analytics';
 static const String moodsByDate = '/api/moods/by-date';
 static const String moodsRange = '/api/moods/range';
+
+// Exercises
+static const String exercises = '/api/exercises';
+static const String guidedExercisesComplete = '/api/exercises/guided/complete';
+static const String guidedExercisesHistory = '/api/exercises/guided/history';
+
+// Schedules (Calendar)
+static const String schedules = '/api/schedules';
 
 
 static String getImageUrl(String? imagePath) {

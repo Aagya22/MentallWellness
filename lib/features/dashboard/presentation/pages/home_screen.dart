@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/calendar_screen.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/exercise_screen.dart';
+import 'package:mentalwellness/features/schedule/presentation/pages/calendar_screen.dart';
+import 'package:mentalwellness/features/exercise/presentation/pages/exercise_screen.dart';
 import 'package:mentalwellness/features/journal/presentation/pages/journal_screen.dart';
 import 'package:mentalwellness/features/mood/presentation/pages/mood_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/reminders_screen.dart';
@@ -49,10 +49,14 @@ class HomeScreen extends ConsumerWidget {
                 headerDate: headerDate,
                 greeting: greeting,
                 userName: userName,
+                onTapLogMood: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MoodScreen()),
+                  );
+                },
               ),
               const SizedBox(height: 18),
               _SectionHeader(
-                icon: Icons.blur_circular,
                 title: 'Weekly Mood',
                 onSeeMore: () {
                   Navigator.of(
@@ -73,7 +77,6 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               _SectionHeader(
-                icon: Icons.notifications_none,
                 title: 'Reminders',
                 onSeeMore: () {
                   Navigator.of(context).push(
@@ -107,7 +110,6 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               _SectionHeader(
-                icon: Icons.calendar_today_outlined,
                 title: 'Events',
                 onSeeMore: () {
                   Navigator.of(context).push(
@@ -215,8 +217,15 @@ class _CircleIconButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1F2A22).withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: Icon(icon, color: const Color(0xFF1F2A22)),
+        child: Icon(icon, color: const Color(0xFF1F2A22), size: 20),
       ),
     );
   }
@@ -227,17 +236,18 @@ class _GreetingCard extends StatelessWidget {
     required this.headerDate,
     required this.greeting,
     required this.userName,
+    this.onTapLogMood,
   });
 
   final String headerDate;
   final String greeting;
   final String userName;
+  final VoidCallback? onTapLogMood;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
         color: const Color(0xFF2D5A44),
         borderRadius: BorderRadius.circular(22),
@@ -245,23 +255,82 @@ class _GreetingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            headerDate,
-            style: TextStyle(
-              fontFamily: 'Inter Medium',
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.75),
-              letterSpacing: 1.1,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  headerDate,
+                  style: TextStyle(
+                    fontFamily: 'Inter Medium',
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.65),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '$greeting,',
+                  style: TextStyle(
+                    fontFamily: 'Inter Medium',
+                    fontSize: 15,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    fontFamily: 'PlayfairDisplay Bold',
+                    fontSize: 30,
+                    height: 1.1,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            '$greeting,\n$userName',
-            style: const TextStyle(
-              fontFamily: 'PlayfairDisplay Bold',
-              fontSize: 30,
-              height: 1.05,
-              color: Colors.white,
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                const Text('🌱', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'How are you feeling today?',
+                    style: TextStyle(
+                      fontFamily: 'Inter Medium',
+                      fontSize: 13,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: onTapLogMood,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'Log mood',
+                      style: TextStyle(
+                        fontFamily: 'Inter Bold',
+                        fontSize: 11,
+                        color: Color(0xFF2D5A44),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -290,7 +359,7 @@ class _EmptySectionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -298,16 +367,16 @@ class _EmptySectionCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              height: 44,
-              width: 44,
+              height: 46,
+              width: 46,
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF1ED),
                 borderRadius: BorderRadius.circular(14),
               ),
               alignment: Alignment.center,
-              child: Icon(icon, color: const Color(0xFF2D5A44)),
+              child: Icon(icon, color: const Color(0xFF2D5A44), size: 22),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,19 +389,26 @@ class _EmptySectionCard extends StatelessWidget {
                       color: Color(0xFF1F2A22),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    ctaText,
-                    style: const TextStyle(
-                      fontFamily: 'Inter Medium',
-                      fontSize: 12,
-                      color: Color(0xFF2D5A44),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF1ED),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      ctaText,
+                      style: const TextStyle(
+                        fontFamily: 'Inter Bold',
+                        fontSize: 11,
+                        color: Color(0xFF2D5A44),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFF7B8A7E)),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF7B8A7E)),
           ],
         ),
       ),
@@ -342,12 +418,10 @@ class _EmptySectionCard extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
-    required this.icon,
     required this.title,
     required this.onSeeMore,
   });
 
-  final IconData icon;
   final String title;
   final VoidCallback onSeeMore;
 
@@ -355,7 +429,14 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF3C4D42)),
+        Container(
+          width: 3,
+          height: 20,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2D5A44),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
         const SizedBox(width: 10),
         Text(
           title,
@@ -366,15 +447,19 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        InkWell(
+        GestureDetector(
           onTap: onSeeMore,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-            child: Text(
-              'See more',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF1ED),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'See all',
               style: TextStyle(
-                fontFamily: 'Inter Medium',
-                fontSize: 13,
+                fontFamily: 'Inter Bold',
+                fontSize: 11,
                 color: Color(0xFF2D5A44),
               ),
             ),
@@ -401,8 +486,6 @@ class _QuickActionsSection extends StatelessWidget {
       children: [
         Row(
           children: const [
-            Icon(Icons.auto_awesome, size: 18, color: Color(0xFF3C4D42)),
-            SizedBox(width: 10),
             Text(
               'Quick Actions',
               style: TextStyle(
@@ -467,8 +550,8 @@ class _QuickActionCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        height: 140,
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+        height: 150,
+        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
         decoration: BoxDecoration(
           color: accentColor,
           borderRadius: BorderRadius.circular(18),
@@ -476,15 +559,16 @@ class _QuickActionCard extends StatelessWidget {
         child: Stack(
           children: [
             Positioned(
-              right: 6,
-              bottom: 6,
+              right: 0,
+              bottom: 0,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
                   trailingAsset,
-                  height: 52,
-                  width: 52,
+                  height: 58,
+                  width: 58,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(),
                 ),
               ),
             ),
@@ -492,42 +576,45 @@ class _QuickActionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.white.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: Text(
                     tag,
                     style: const TextStyle(
                       fontFamily: 'Inter Bold',
-                      fontSize: 11,
+                      fontSize: 9,
                       color: Color(0xFF2D5A44),
-                      letterSpacing: 0.8,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   title,
                   style: const TextStyle(
                     fontFamily: 'PlayfairDisplay Bold',
-                    fontSize: 18,
+                    fontSize: 20,
                     height: 1.1,
                     color: Color(0xFF1F2A22),
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  actionText,
-                  style: const TextStyle(
-                    fontFamily: 'Inter Medium',
-                    fontSize: 12,
-                    color: Color(0xFF2D5A44),
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      actionText,
+                      style: const TextStyle(
+                        fontFamily: 'Inter Medium',
+                        fontSize: 12,
+                        color: Color(0xFF2D5A44),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_rounded, size: 13, color: Color(0xFF2D5A44)),
+                  ],
                 ),
               ],
             ),
@@ -545,16 +632,16 @@ class _EmptyEventsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 26),
+      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
+      child: Row(
         children: [
           Container(
-            height: 44,
-            width: 44,
+            height: 46,
+            width: 46,
             decoration: BoxDecoration(
               color: const Color(0xFFEAF1ED),
               borderRadius: BorderRadius.circular(14),
@@ -563,15 +650,32 @@ class _EmptyEventsCard extends StatelessWidget {
             child: const Icon(
               Icons.calendar_month_outlined,
               color: Color(0xFF2D5A44),
+              size: 22,
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            'No upcoming events',
-            style: TextStyle(
-              fontFamily: 'Inter Regular',
-              fontSize: 13,
-              color: Color(0xFF8B978E),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No upcoming events',
+                  style: TextStyle(
+                    fontFamily: 'Inter Medium',
+                    fontSize: 13,
+                    color: Color(0xFF1F2A22),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Add events to see them here',
+                  style: TextStyle(
+                    fontFamily: 'Inter Regular',
+                    fontSize: 11,
+                    color: Color(0xFF8B978E),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/calendar_screen.dart';
+import 'package:mentalwellness/features/schedule/presentation/pages/calendar_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/home_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/profile_screen.dart';
 

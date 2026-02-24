@@ -110,14 +110,11 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
     return user;
   }
 
-  @override
   Future<String> uploadPhoto(File photo) async {
     final fileName = photo.path.split('/').last;
     final formData = FormData.fromMap({
       'itemPhoto': await MultipartFile.fromFile(photo.path, filename: fileName),
     });
-
-    final token = await _tokenService.getToken();
 
     final response = await _apiClient.put(
     ApiEndpoints.userUpdateProfile, 
