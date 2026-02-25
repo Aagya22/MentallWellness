@@ -7,7 +7,7 @@ import 'package:mentalwellness/features/schedule/presentation/pages/calendar_scr
 import 'package:mentalwellness/features/exercise/presentation/pages/exercise_screen.dart';
 import 'package:mentalwellness/features/journal/presentation/pages/journal_screen.dart';
 import 'package:mentalwellness/features/mood/presentation/pages/mood_screen.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/reminders_screen.dart';
+import 'package:mentalwellness/features/reminder/presentation/pages/reminders_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -286,48 +286,6 @@ class _GreetingCard extends StatelessWidget {
                     fontSize: 30,
                     height: 1.1,
                     color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                const Text('🌱', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    'How are you feeling today?',
-                    style: TextStyle(
-                      fontFamily: 'Inter Medium',
-                      fontSize: 13,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onTapLogMood,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Log mood',
-                      style: TextStyle(
-                        fontFamily: 'Inter Bold',
-                        fontSize: 11,
-                        color: Color(0xFF2D5A44),
-                      ),
-                    ),
                   ),
                 ),
               ],
