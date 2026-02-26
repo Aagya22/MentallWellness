@@ -25,4 +25,6 @@ abstract interface class IExerciseRepository {
     DateTime? from,
     DateTime? to,
   });
+
+  Future<Either<Failure, int>> clearExerciseHistory();
 }

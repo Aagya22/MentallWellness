@@ -4,14 +4,17 @@ import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/features/exercise/data/models/exercise_api_model.dart';
 import 'package:mentalwellness/features/exercise/data/models/guided_history_api_model.dart';
 
-final exerciseRemoteDatasourceProvider = Provider<ExerciseRemoteDatasource>((ref) {
+final exerciseRemoteDatasourceProvider = Provider<ExerciseRemoteDatasource>((
+  ref,
+) {
   return ExerciseRemoteDatasource(apiClient: ref.read(apiClientProvider));
 });
 
 class ExerciseRemoteDatasource {
   final ApiClient _apiClient;
 
-  ExerciseRemoteDatasource({required ApiClient apiClient}) : _apiClient = apiClient;
+  ExerciseRemoteDatasource({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   Future<List<ExerciseApiModel>> getExercises() async {
     final res = await _apiClient.get(ApiEndpoints.exercises);
@@ -43,7 +46,9 @@ class ExerciseRemoteDatasource {
     );
 
     if (res.data['success'] == true) {
-      return ExerciseApiModel.fromJson(res.data['data'] as Map<String, dynamic>);
+      return ExerciseApiModel.fromJson(
+        res.data['data'] as Map<String, dynamic>,
+      );
     }
 
     throw Exception(res.data['message'] ?? 'Failed to create exercise');
@@ -68,7 +73,9 @@ class ExerciseRemoteDatasource {
     );
 
     if (res.data['success'] == true) {
-      return ExerciseApiModel.fromJson(res.data['data'] as Map<String, dynamic>);
+      return ExerciseApiModel.fromJson(
+        res.data['data'] as Map<String, dynamic>,
+      );
     }
 
     throw Exception(res.data['message'] ?? 'Failed to save guided session');
@@ -89,10 +96,26 @@ class ExerciseRemoteDatasource {
     if (res.data['success'] == true) {
       final list = (res.data['data'] as List).cast<dynamic>();
       return list
-          .map((e) => GuidedHistoryDayApiModel.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => GuidedHistoryDayApiModel.fromJson(e as Map<String, dynamic>),
+          )
           .toList();
     }
 
     throw Exception(res.data['message'] ?? 'Failed to fetch guided history');
+  }
+
+  Future<int> clearExerciseHistory() async {
+    final res = await _apiClient.delete(ApiEndpoints.exercisesHistory);
+
+    if (res.data['success'] == true) {
+      final data = res.data['data'] as Map<String, dynamic>?;
+      final deleted = data?['deletedCount'];
+      if (deleted is int) return deleted;
+      if (deleted is num) return deleted.toInt();
+      return 0;
+    }
+
+    throw Exception(res.data['message'] ?? 'Failed to clear exercise history');
   }
 }

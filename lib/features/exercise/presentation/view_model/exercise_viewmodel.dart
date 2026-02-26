@@ -5,16 +5,17 @@ import 'package:mentalwellness/features/exercise/domain/usecases/get_exercises_u
 import 'package:mentalwellness/features/exercise/domain/usecases/complete_guided_exercise_usecase.dart';
 import 'package:mentalwellness/features/exercise/presentation/state/exercise_state.dart';
 import 'package:mentalwellness/features/exercise/domain/usecases/get_guided_history_usecase.dart';
+import 'package:mentalwellness/features/exercise/domain/usecases/clear_exercise_history_usecase.dart';
 
-final exerciseViewModelProvider = NotifierProvider<ExerciseViewModel, ExerciseState>(
-  ExerciseViewModel.new,
-);
+final exerciseViewModelProvider =
+    NotifierProvider<ExerciseViewModel, ExerciseState>(ExerciseViewModel.new);
 
 class ExerciseViewModel extends Notifier<ExerciseState> {
   late final GetExercisesUsecase _get;
   late final CreateExerciseUsecase _create;
   late final CompleteGuidedExerciseUsecase _completeGuided;
   late final GetGuidedHistoryUsecase _getGuidedHistory;
+  late final ClearExerciseHistoryUsecase _clearHistory;
 
   @override
   ExerciseState build() {
@@ -22,9 +23,35 @@ class ExerciseViewModel extends Notifier<ExerciseState> {
     _create = ref.read(createExerciseUsecaseProvider);
     _completeGuided = ref.read(completeGuidedExerciseUsecaseProvider);
     _getGuidedHistory = ref.read(getGuidedHistoryUsecaseProvider);
+    _clearHistory = ref.read(clearExerciseHistoryUsecaseProvider);
 
     Future.microtask(refresh);
     return const ExerciseState();
+  }
+
+  Future<int?> clearHistory() async {
+    state = state.copyWith(status: ExerciseStatus.saving, errorMessage: null);
+
+    final res = await _clearHistory();
+    Failure? failure;
+    int? deletedCount;
+    res.fold((f) => failure = f, (count) => deletedCount = count);
+
+    if (failure != null) {
+      state = state.copyWith(
+        status: ExerciseStatus.error,
+        errorMessage: failure!.message,
+      );
+      return null;
+    }
+
+    state = state.copyWith(
+      status: ExerciseStatus.loaded,
+      exercises: const [],
+      guidedHistory: const [],
+      errorMessage: null,
+    );
+    return deletedCount ?? 0;
   }
 
   Future<void> refresh() async {
@@ -59,13 +86,13 @@ class ExerciseViewModel extends Notifier<ExerciseState> {
     );
 
     Failure? failure;
-    res.fold(
-      (f) => failure = f,
-      (_) {},
-    );
+    res.fold((f) => failure = f, (_) {});
 
     if (failure != null) {
-      state = state.copyWith(status: ExerciseStatus.error, errorMessage: failure!.message);
+      state = state.copyWith(
+        status: ExerciseStatus.error,
+        errorMessage: failure!.message,
+      );
       return false;
     }
 
@@ -73,10 +100,7 @@ class ExerciseViewModel extends Notifier<ExerciseState> {
     return true;
   }
 
-  Future<void> getGuidedHistory({
-    DateTime? from,
-    DateTime? to,
-  }) async {
+  Future<void> getGuidedHistory({DateTime? from, DateTime? to}) async {
     state = state.copyWith(isGuidedHistoryLoading: true, errorMessage: null);
     final res = await _getGuidedHistory(from: from, to: to);
     state = state.copyWith(isGuidedHistoryLoading: false);
@@ -103,7 +127,10 @@ class ExerciseViewModel extends Notifier<ExerciseState> {
 
     return res.fold(
       (f) {
-        state = state.copyWith(status: ExerciseStatus.error, errorMessage: f.message);
+        state = state.copyWith(
+          status: ExerciseStatus.error,
+          errorMessage: f.message,
+        );
         return false;
       },
       (created) {

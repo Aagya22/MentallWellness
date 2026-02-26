@@ -38,11 +38,15 @@ class ExerciseRepositoryImpl implements IExerciseRepository {
         ..sort((a, b) => b.date.compareTo(a.date));
       return Right(entities);
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message:
-            e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -68,11 +72,15 @@ class ExerciseRepositoryImpl implements IExerciseRepository {
       );
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message:
-            e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -100,11 +108,15 @@ class ExerciseRepositoryImpl implements IExerciseRepository {
       );
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message:
-            e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -125,11 +137,40 @@ class ExerciseRepositoryImpl implements IExerciseRepository {
       final entities = models.map((m) => m.toEntity()).toList();
       return Right(entities);
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message:
-            e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> clearExerciseHistory() async {
+    try {
+      final connected = await _isConnected();
+      if (!connected) {
+        return const Left(ApiFailure(message: 'No internet connection'));
+      }
+
+      final deletedCount = await _remote.clearExerciseHistory();
+      return Right(deletedCount);
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }

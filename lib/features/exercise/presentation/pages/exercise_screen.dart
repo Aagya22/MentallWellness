@@ -85,6 +85,60 @@ class _ExerciseScreenState extends ConsumerState<ExerciseScreen>
           ),
         ),
         actions: [
+          if (_tabController.index == 1)
+            IconButton(
+              onPressed: () async {
+                final confirmed =
+                    await showDialog<bool>(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Delete all history?'),
+                          content: const Text(
+                            'This will permanently delete your exercise history. This action cannot be undone.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        );
+                      },
+                    ) ??
+                    false;
+
+                if (!confirmed) return;
+
+                final deletedCount = await ref
+                    .read(exerciseViewModelProvider.notifier)
+                    .clearHistory();
+                if (!mounted) return;
+                if (deletedCount == null) {
+                  final message =
+                      ref.read(exerciseViewModelProvider).errorMessage ??
+                      'Failed to clear history';
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(message)));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('History cleared ($deletedCount items)'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(
+                Icons.delete_forever_rounded,
+                color: Color(0xFF2D5A44),
+              ),
+              tooltip: 'Delete all history',
+            ),
           IconButton(
             onPressed: () {
               ref.read(exerciseViewModelProvider.notifier).refresh();
@@ -144,9 +198,7 @@ class _ExerciseScreenState extends ConsumerState<ExerciseScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _ExploreTab(
-                  onOpenGuided: _openGuidedSession,
-                ),
+                _ExploreTab(onOpenGuided: _openGuidedSession),
                 _HistoryTab(state: state),
               ],
             ),
@@ -157,21 +209,23 @@ class _ExerciseScreenState extends ConsumerState<ExerciseScreen>
   }
 }
 
-
 IconData _iconForCategory(String category) {
   final c = category.toLowerCase();
   if (c.contains('breath')) return Icons.air_rounded;
   if (c.contains('ground')) return Icons.nature_rounded;
   if (c.contains('gratitude')) return Icons.volunteer_activism_rounded;
-  if (c.contains('stretch') || c.contains('body')) return Icons.self_improvement_rounded;
+  if (c.contains('stretch') || c.contains('body'))
+    return Icons.self_improvement_rounded;
   return Icons.auto_awesome_rounded;
 }
+
 Color _accentForCategory(String category) {
   final c = category.toLowerCase();
   if (c.contains('breath')) return const Color(0xFFDCEEFF);
   if (c.contains('ground')) return const Color(0xFFDCEFE4);
   if (c.contains('gratitude')) return const Color(0xFFFFF0DC);
-  if (c.contains('stretch') || c.contains('body')) return const Color(0xFFEDE4FF);
+  if (c.contains('stretch') || c.contains('body'))
+    return const Color(0xFFEDE4FF);
   return const Color(0xFFEAF1ED);
 }
 
@@ -205,7 +259,7 @@ class _ExploreTab extends StatelessWidget {
         const SizedBox(height: 24),
         ...guidedExercises.map((g) {
           final accent = _accentForCategory(g.category);
-            final icon = _iconForCategory(g.category);
+          final icon = _iconForCategory(g.category);
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: GestureDetector(
@@ -272,7 +326,9 @@ class _ExploreTab extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFEAF1ED),
                               borderRadius: BorderRadius.circular(10),
@@ -446,7 +502,9 @@ class _HistoryTab extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: isToday
                             ? const Color(0xFF2D5A44)
@@ -501,7 +559,9 @@ class _HistoryTab extends StatelessWidget {
                           children: [
                             Padding(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 14),
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
                               child: Row(
                                 children: [
                                   Container(
@@ -509,8 +569,7 @@ class _HistoryTab extends StatelessWidget {
                                     height: 42,
                                     decoration: BoxDecoration(
                                       color: accent,
-                                      borderRadius:
-                                          BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Center(
                                       child: Icon(
@@ -550,7 +609,9 @@ class _HistoryTab extends StatelessWidget {
                                   ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFEAF1ED),
                                       borderRadius: BorderRadius.circular(10),
@@ -580,10 +641,11 @@ class _HistoryTab extends StatelessWidget {
                             ),
                             if (!isLast)
                               const Divider(
-                                  height: 1,
-                                  indent: 16,
-                                  endIndent: 16,
-                                  color: Color(0xFFF0EDE5)),
+                                height: 1,
+                                indent: 16,
+                                endIndent: 16,
+                                color: Color(0xFFF0EDE5),
+                              ),
                           ],
                         );
                       }),
@@ -596,4 +658,5 @@ class _HistoryTab extends StatelessWidget {
         }),
       ],
     );
-  }}
+  }
+}
