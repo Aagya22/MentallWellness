@@ -7,6 +7,7 @@ import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mentalwellness/features/auth/data/datasources/remote/auth_remote_datasource.dart';
+import 'package:mentalwellness/features/auth/presentation/view_model/auth_viewmodel.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -69,7 +70,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: const Text('Permission Required'),
         content: const Text('Enable permission from settings to continue'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               openAppSettings();
@@ -84,13 +88,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _pickFromCamera() async {
     if (!await _requestPermission(Permission.camera)) return;
-    final image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    final image = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
     if (image != null) setState(() => _pickedImage = image);
   }
 
   Future<void> _pickFromGallery() async {
     if (!await _requestPermission(Permission.photos)) return;
-    final image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
     if (image != null) setState(() => _pickedImage = image);
   }
 
@@ -98,7 +108,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!_isEditing) return;
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -133,7 +145,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final userId = userSession.getCurrentUserId();
       if (userId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User ID not found. Please login again.')),
+          const SnackBar(
+            content: Text('User ID not found. Please login again.'),
+          ),
         );
         return;
       }
@@ -150,10 +164,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'phoneNumber': _phoneCtrl.text.trim(),
       };
       final file = _pickedImage != null ? File(_pickedImage!.path) : null;
-      final updatedUser = await authRemoteDatasource.updateUser(userId, updateData, file);
+      final updatedUser = await authRemoteDatasource.updateUser(
+        userId,
+        updateData,
+        file,
+      );
       if (mounted) Navigator.pop(context);
       if (updatedUser != null) {
-        if (updatedUser.profilePicture != null && updatedUser.profilePicture!.isNotEmpty) {
+        if (updatedUser.profilePicture != null &&
+            updatedUser.profilePicture!.isNotEmpty) {
           setState(() {
             _storedProfilePictureUrl = updatedUser.profilePicture;
             _pickedImage = null;
@@ -162,19 +181,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         setState(() => _isEditing = false);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update profile'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to update profile'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating profile: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error updating profile: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -186,7 +214,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final userId = userSession.getCurrentUserId();
       if (userId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User ID not found. Please login again.')),
+          const SnackBar(
+            content: Text('User ID not found. Please login again.'),
+          ),
         );
         return;
       }
@@ -203,7 +233,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'phoneNumber': _phoneCtrl.text.trim(),
         'imageUrl': '',
       };
-      final updatedUser = await authRemoteDatasource.updateUser(userId, updateData, null);
+      final updatedUser = await authRemoteDatasource.updateUser(
+        userId,
+        updateData,
+        null,
+      );
       if (mounted) Navigator.pop(context);
       if (updatedUser != null) {
         await userSession.deleteProfilePicture();
@@ -213,19 +247,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         });
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture deleted successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Profile picture deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete profile picture'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to delete profile picture'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting profile picture: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error deleting profile picture: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -237,12 +280,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final session = ref.read(userSessionServiceProvider);
-              await session.clearSession();
+              await ref.read(authViewModelProvider.notifier).logout();
               if (!mounted) return;
               Navigator.pushReplacementNamed(context, '/LandingScreen');
             },
@@ -253,14 +298,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
- ImageProvider? _getProfileImage() {
-  if (_pickedImage != null) return FileImage(File(_pickedImage!.path));
-  if (_storedProfilePictureUrl != null && _storedProfilePictureUrl!.isNotEmpty) {
-    final fullImageUrl = ApiEndpoints.getImageUrl(_storedProfilePictureUrl);
-    return NetworkImage(fullImageUrl);
+  ImageProvider? _getProfileImage() {
+    if (_pickedImage != null) return FileImage(File(_pickedImage!.path));
+    if (_storedProfilePictureUrl != null &&
+        _storedProfilePictureUrl!.isNotEmpty) {
+      final fullImageUrl = ApiEndpoints.getImageUrl(_storedProfilePictureUrl);
+      return NetworkImage(fullImageUrl);
+    }
+    return null;
   }
-  return null;
-}
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +322,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Profile', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Profile',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     IconButton(
                       icon: Icon(_isEditing ? Icons.close : Icons.edit),
                       onPressed: () => setState(() => _isEditing = !_isEditing),
@@ -293,8 +345,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           radius: 56,
                           backgroundColor: Colors.grey.shade200,
                           backgroundImage: _getProfileImage(),
-                          child: _pickedImage == null && (_storedProfilePictureUrl == null || _storedProfilePictureUrl!.isEmpty)
-                              ? const Icon(Icons.camera_alt, size: 36, color: Colors.grey)
+                          child:
+                              _pickedImage == null &&
+                                  (_storedProfilePictureUrl == null ||
+                                      _storedProfilePictureUrl!.isEmpty)
+                              ? const Icon(
+                                  Icons.camera_alt,
+                                  size: 36,
+                                  color: Colors.grey,
+                                )
                               : null,
                         ),
                         if (_isEditing && _pickedImage != null)
@@ -305,8 +364,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               radius: 16,
                               backgroundColor: Colors.red,
                               child: IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 12),
-                                onPressed: () => setState(() => _pickedImage = null),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
+                                onPressed: () =>
+                                    setState(() => _pickedImage = null),
                                 padding: EdgeInsets.zero,
                               ),
                             ),
@@ -343,7 +407,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   icon: const Icon(Icons.save),
                   label: const Text('Save Changes'),
                   onPressed: _isEditing ? _saveProfile : null,
-                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
@@ -364,14 +430,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _field(String label, TextEditingController ctrl, {TextInputType? keyboard}) {
+  Widget _field(
+    String label,
+    TextEditingController ctrl, {
+    TextInputType? keyboard,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
         enabled: _isEditing,
         keyboardType: keyboard,
-        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
         validator: (v) => v == null || v.isEmpty ? 'Required' : null,
       ),
     );

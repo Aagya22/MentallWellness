@@ -6,7 +6,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
-
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
 });
@@ -157,22 +156,14 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Skip auth for public endpoints
-    final publicEndpoints = [
-      ApiEndpoints.user,
-      ApiEndpoints.userLogin,
-      ApiEndpoints.userRegister,
-    ];
-
-    final isPublicGet =
-        options.method == 'GET' &&
-        publicEndpoints.any((endpoint) => options.path.startsWith(endpoint));
-
-    final isAuthEndpoint =
+    // Skip auth header only for public auth endpoints.
+    final isPublicAuthEndpoint =
         options.path == ApiEndpoints.userLogin ||
-        options.path == ApiEndpoints.userRegister;
+        options.path == ApiEndpoints.userRegister ||
+        options.path == ApiEndpoints.requestPasswordReset ||
+        options.path.startsWith(ApiEndpoints.resetPassword);
 
-    if (!isPublicGet && !isAuthEndpoint) {
+    if (!isPublicAuthEndpoint) {
       final token = await _storage.read(key: _tokenKey);
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';

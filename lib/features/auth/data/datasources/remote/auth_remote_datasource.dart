@@ -25,13 +25,15 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
     required ApiClient apiClient,
     required UserSessionService userSessionService,
     required TokenService tokenService,
-  })  : _apiClient = apiClient,
-        _userSessionService = userSessionService,
-        _tokenService = tokenService;
+  }) : _apiClient = apiClient,
+       _userSessionService = userSessionService,
+       _tokenService = tokenService;
 
   @override
   Future<AuthApiModel?> getUserById(String authId) async {
-    final response = await _apiClient.get('${ApiEndpoints.user}/$authId');
+    // Backend exposes current user via /api/auth/whoami (JWT required).
+    // Keep this method signature for compatibility with repository/usecase.
+    final response = await _apiClient.get(ApiEndpoints.userWhoAmI);
     if (response.data["success"] == true) {
       final data = response.data["data"] as Map<String, dynamic>;
       return AuthApiModel.fromJson(data);
@@ -46,18 +48,10 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
       data: {"email": email, "password": password},
     );
 
-    print('=== LOGIN RESPONSE ===');
-    print(response.data);
-
     if (response.data["success"] == true) {
       final data = response.data["data"] as Map<String, dynamic>;
-      print('=== USER DATA ===');
-      print(data);
-      
+
       final user = AuthApiModel.fromJson(data);
-      
-      print('=== PARSED USER ===');
-      print('User profilePicture: ${user.profilePicture}');
 
       final token = response.data["token"] as String?;
       if (token != null && token.isNotEmpty) {
@@ -71,6 +65,7 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
         username: user.username,
         phoneNumber: user.phoneNumber,
         profilePicture: user.profilePicture,
+        role: user.role,
       );
 
       return user;
@@ -102,6 +97,7 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
         username: registeredUser.username,
         phoneNumber: registeredUser.phoneNumber,
         profilePicture: registeredUser.profilePicture,
+        role: registeredUser.role,
       );
 
       return registeredUser;
@@ -117,15 +113,19 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
     });
 
     final response = await _apiClient.put(
-    ApiEndpoints.userUpdateProfile, 
-    data: formData,
-    options: Options(contentType: 'multipart/form-data'),
-  );
+      ApiEndpoints.userUpdateProfile,
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
+    );
     return response.data['data'];
   }
 
   @override
-  Future<AuthApiModel?> updateUser(String userId, Map<String, dynamic> data, File? imageFile) async {
+  Future<AuthApiModel?> updateUser(
+    String userId,
+    Map<String, dynamic> data,
+    File? imageFile,
+  ) async {
     final formData = FormData.fromMap(data);
 
     if (imageFile != null) {
@@ -155,6 +155,7 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
         username: updatedUser.username,
         phoneNumber: updatedUser.phoneNumber,
         profilePicture: updatedUser.profilePicture,
+        role: updatedUser.role,
       );
 
       return updatedUser;

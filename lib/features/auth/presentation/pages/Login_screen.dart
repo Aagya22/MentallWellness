@@ -28,7 +28,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _submitLogin() {
     if (_formKey.currentState!.validate()) {
-      ref.read(authViewModelProvider.notifier).login(
+      ref
+          .read(authViewModelProvider.notifier)
+          .login(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
@@ -45,8 +47,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           message: "Login Successful",
           color: Colors.green,
         );
-        Navigator.pushReplacementNamed(
-            context, '/BottomNavigationScreen');
+        final role = next.user?.role;
+        if (role == 'admin') {
+          Navigator.pushReplacementNamed(
+            context,
+            '/AdminBottomNavigationScreen',
+          );
+        } else {
+          Navigator.pushReplacementNamed(context, '/BottomNavigationScreen');
+        }
       } else if (next.status == AuthStatus.error) {
         showMySnackBar(
           context: context,
@@ -70,10 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const SizedBox(height: 30),
                 Center(
-                  child: Image.asset(
-                    "assets/images/novacane.png",
-                    height: 90,
-                  ),
+                  child: Image.asset("assets/images/novacane.png", height: 90),
                 ),
                 const SizedBox(height: 30),
                 const Text(
@@ -164,19 +170,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             });
                           },
                         ),
-                        const Text("Remember me",
-                            style: TextStyle(fontSize: 13)),
+                        const Text(
+                          "Remember me",
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ],
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(
-                            context, '/ForgotpasswordScreen');
+                        Navigator.pushNamed(context, '/ForgotpasswordScreen');
                       },
                       child: const Text(
                         "Forgot password ?",
-                        style:
-                            TextStyle(fontSize: 13, color: Colors.red),
+                        style: TextStyle(fontSize: 13, color: Colors.red),
                       ),
                     ),
                   ],
@@ -209,8 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const Text("New member ? "),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(
-                            context, '/RegisterScreen');
+                        Navigator.pushNamed(context, '/RegisterScreen');
                       },
                       child: const Text(
                         "Register now",
