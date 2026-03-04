@@ -8,6 +8,7 @@ import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mentalwellness/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:mentalwellness/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:mentalwellness/features/settings/presentation/pages/settings_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -329,9 +330,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(_isEditing ? Icons.close : Icons.edit),
-                      onPressed: () => setState(() => _isEditing = !_isEditing),
+                    Row(
+                      children: [
+                        IconButton(
+                          tooltip: 'Settings',
+                          icon: const Icon(Icons.settings),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(_isEditing ? Icons.close : Icons.edit),
+                          onPressed: () =>
+                              setState(() => _isEditing = !_isEditing),
+                        ),
+                      ],
                     ),
                   ],
                 ),

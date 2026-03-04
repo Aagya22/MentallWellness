@@ -27,6 +27,11 @@ class ApiEndpoints {
   static const String requestPasswordReset = '/api/auth/request-password-reset';
   static const String resetPassword = '/api/auth/reset-password';
 
+  // Journal passcode
+  static const String journalPasscode = '/api/auth/journal-passcode';
+  static const String journalPasscodeVerify =
+      '/api/auth/journal-passcode/verify';
+
   // Admin
   static const String adminUsers = '/api/admin/users';
 

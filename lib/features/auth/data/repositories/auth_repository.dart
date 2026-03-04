@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/core/services/connectivity/network_info.dart';
+import 'package:mentalwellness/core/services/storage/journal_access_token_service.dart';
 import 'package:mentalwellness/core/services/storage/token_service.dart';
 import '../../../../core/error/failures.dart';
 import '../datasources/local/auth_local_datasource.dart';
@@ -16,11 +17,13 @@ final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   final authRemoteDatasource = ref.read(authRemoteDatasourceProvider);
   final networkInfo = ref.read(networkInfoProvider);
   final tokenService = ref.read(tokenServiceProvider);
+  final journalAccessTokenService = ref.read(journalAccessTokenServiceProvider);
   return AuthRepository(
     authLocalDatasource: authLocalDatasource,
     authRemoteDatasource: authRemoteDatasource,
     networkInfo: networkInfo,
     tokenService: tokenService,
+    journalAccessTokenService: journalAccessTokenService,
   );
 });
 
@@ -29,16 +32,19 @@ class AuthRepository implements IAuthRepository {
   final AuthRemoteDatasource _authRemoteDatasource;
   final INetworkInfo _networkInfo;
   final TokenService _tokenService;
+  final JournalAccessTokenService _journalAccessTokenService;
 
   AuthRepository({
     required AuthLocalDataSource authLocalDatasource,
     required AuthRemoteDatasource authRemoteDatasource,
     required INetworkInfo networkInfo,
     required TokenService tokenService,
+    required JournalAccessTokenService journalAccessTokenService,
   }) : _authLocalDataSource = authLocalDatasource,
        _authRemoteDatasource = authRemoteDatasource,
        _networkInfo = networkInfo,
-       _tokenService = tokenService;
+       _tokenService = tokenService,
+       _journalAccessTokenService = journalAccessTokenService;
   // Simple helper to check connectivity
   Future<bool> _isConnected() => _networkInfo.isConnected;
 
@@ -158,6 +164,7 @@ class AuthRepository implements IAuthRepository {
       // Always clear local session
       final localResult = await _authLocalDataSource.logout();
       await _tokenService.removeToken();
+      await _journalAccessTokenService.removeToken();
       // Optionally notify server if online (not implemented)
       return Right(localResult);
     } catch (e) {

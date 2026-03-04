@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/features/schedule/presentation/pages/calendar_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/home_screen.dart';
-import 'package:mentalwellness/features/dashboard/presentation/pages/profile_screen.dart';
+import 'package:mentalwellness/features/settings/presentation/pages/settings_screen.dart';
 import 'package:mentalwellness/core/services/notifications/local_notification_service_provider.dart';
 import 'package:mentalwellness/features/reminder/presentation/view_model/reminder_notifications_viewmodel.dart';
 
@@ -22,7 +22,7 @@ class _BottomNavigationScreenState extends ConsumerState<BottomNavigationScreen>
   final List<Widget> _screens = const [
     HomeScreen(),
     CalendarScreen(),
-    ProfileScreen(),
+    SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -37,9 +37,9 @@ class _BottomNavigationScreenState extends ConsumerState<BottomNavigationScreen>
 
     Future.microtask(() async {
       await ref.read(localNotificationServiceProvider).init();
-      // Fetch history once so any newly backfilled items can be surfaced as OS notifications.
+
       await ref.read(reminderNotificationsViewModelProvider.notifier).fetchHistory();
-      // Check due reminders periodically while app is in foreground.
+      
       ref.read(reminderNotificationsViewModelProvider.notifier).checkDueAndNotify();
       _duePoll?.cancel();
       _duePoll = Timer.periodic(const Duration(minutes: 1), (_) {

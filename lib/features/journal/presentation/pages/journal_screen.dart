@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mentalwellness/features/journal/domain/entities/journal_entity.dart';
@@ -14,6 +15,16 @@ class JournalScreen extends ConsumerStatefulWidget {
 
 class _JournalScreenState extends ConsumerState<JournalScreen> {
   final _searchController = TextEditingController();
+  bool? _unlockDialogOpen;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(journalViewModelProvider.notifier).fetchJournals();
+    });
+  }
 
   @override
   void dispose() {
@@ -21,13 +32,61 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     super.dispose();
   }
 
+  void _maybePromptUnlock(JournalState? previous, JournalState next) {
+    if (_unlockDialogOpen == true) return;
+    if (next.passcodeRequired != true) return;
+    if (previous?.passcodeRequired == true) return;
+
+    _unlockDialogOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _unlockDialogOpen = false;
+        return;
+      }
+      try {
+        await _showUnlockDialog();
+      } finally {
+        _unlockDialogOpen = false;
+      }
+    });
+  }
+
+  Future<void> _showUnlockDialog() async {
+    final notifier = ref.read(journalViewModelProvider.notifier);
+    final unlocked = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return _UnlockJournalDialog(
+          onUnlock: (passcode) => notifier.unlockJournal(passcode: passcode),
+        );
+      },
+    );
+
+    if (unlocked == true && mounted) {
+      final journalRoute = ModalRoute.of(context);
+      if (journalRoute != null && journalRoute.isCurrent != true) {
+        Navigator.of(context).popUntil((route) => route == journalRoute);
+      }
+
+      final query = _searchController.text.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        notifier.fetchJournals(q: query.isEmpty ? null : query);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(journalViewModelProvider, (previous, next) {
+      _maybePromptUnlock(previous, next);
       if (next.status == JournalStatus.error && next.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+        });
       }
     });
 
@@ -64,15 +123,25 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 }
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFEAF1ED), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFFEAF1ED),
+                    width: 1.5,
+                  ),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.edit_outlined, size: 16, color: Color(0xFF2D5A44)),
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 16,
+                      color: Color(0xFF2D5A44),
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'New',
@@ -96,7 +165,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: _SearchBar(
                 controller: _searchController,
-                onSearch: () => notifier.fetchJournals(q: _searchController.text),
+                onSearch: () =>
+                    notifier.fetchJournals(q: _searchController.text),
                 onClear: () {
                   _searchController.clear();
                   notifier.fetchJournals();
@@ -105,9 +175,26 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             ),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () => notifier.fetchJournals(q: _searchController.text),
+                onRefresh: () =>
+                    notifier.fetchJournals(q: _searchController.text),
                 child: Builder(
                   builder: (context) {
+                    if (state.passcodeRequired == true) {
+                      return ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        children: [
+                          _EmptyStateCard(
+                            icon: Icons.lock_outline,
+                            title: 'Journal is locked',
+                            subtitle:
+                                'Enter your passcode to view your entries.',
+                            ctaText: 'Unlock journal',
+                            onTap: _showUnlockDialog,
+                          ),
+                        ],
+                      );
+                    }
+
                     if (state.status == JournalStatus.loading &&
                         state.journals.isEmpty) {
                       return const Center(
@@ -123,7 +210,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                         children: [
                           _EmptyStateCard(
                             title: 'No journal entries yet',
-                            subtitle: 'Write something about today and track your progress over time.',
+                            subtitle:
+                                'Write something about today and track your progress over time.',
                             ctaText: 'Write your first entry',
                             onTap: () async {
                               final ok = await Navigator.of(context).push<bool>(
@@ -142,13 +230,15 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
                     return ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      itemCount: state.journals.length +
+                      itemCount:
+                          state.journals.length +
                           ((state.status == JournalStatus.loading ||
                                       state.status == JournalStatus.saving) &&
                                   state.journals.isNotEmpty
                               ? 1
                               : 0),
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         if (index >= state.journals.length) {
                           return const Padding(
@@ -165,23 +255,30 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                         return _JournalEntryCard(
                           entry: entry,
                           onTap: () async {
-                            final changed = await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(
-                                builder: (_) => _JournalEntryScreen(entry: entry),
-                              ),
-                            );
+                            final changed = await Navigator.of(context)
+                                .push<bool>(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        _JournalEntryScreen(entry: entry),
+                                  ),
+                                );
                             if (changed == true && mounted) {
-                              await notifier.fetchJournals(q: _searchController.text);
+                              await notifier.fetchJournals(
+                                q: _searchController.text,
+                              );
                             }
                           },
                           onEdit: () async {
                             final ok = await Navigator.of(context).push<bool>(
                               MaterialPageRoute(
-                                builder: (_) => _JournalEditorScreen(existing: entry),
+                                builder: (_) =>
+                                    _JournalEditorScreen(existing: entry),
                               ),
                             );
                             if (ok == true && mounted) {
-                              await notifier.fetchJournals(q: _searchController.text);
+                              await notifier.fetchJournals(
+                                q: _searchController.text,
+                              );
                             }
                           },
                           onDelete: () async {
@@ -199,11 +296,13 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                                 ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.pop(dialogContext, false),
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, false),
                                     child: const Text('Cancel'),
                                   ),
                                   TextButton(
-                                    onPressed: () => Navigator.pop(dialogContext, true),
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, true),
                                     child: const Text(
                                       'Delete',
                                       style: TextStyle(color: Colors.red),
@@ -304,14 +403,136 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
+class _UnlockJournalDialog extends StatefulWidget {
+  const _UnlockJournalDialog({required this.onUnlock});
+
+  final Future<String?> Function(String passcode) onUnlock;
+
+  @override
+  State<_UnlockJournalDialog> createState() => _UnlockJournalDialogState();
+}
+
+class _UnlockJournalDialogState extends State<_UnlockJournalDialog> {
+  final _passcodeController = TextEditingController();
+  String? _errorText;
+  var _submitting = false;
+
+  @override
+  void dispose() {
+    _passcodeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final passcode = _passcodeController.text.trim();
+    if (passcode.isEmpty) {
+      setState(() => _errorText = 'Passcode is required');
+      return;
+    }
+    if (passcode.length < 4 || passcode.length > 8) {
+      setState(() => _errorText = 'Passcode must be 4 to 8 digits');
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _errorText = null;
+    });
+
+    try {
+      final err = await widget.onUnlock(passcode);
+      if (!mounted) return;
+      if (err == null) {
+        Navigator.of(context).pop(true);
+        return;
+      }
+
+      setState(() {
+        _submitting = false;
+        _errorText = err;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _errorText = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        'Unlock journal',
+        style: TextStyle(fontFamily: 'Inter Bold'),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter your 4–8 digit passcode to view your entries.',
+              style: TextStyle(fontFamily: 'Inter Regular'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _passcodeController,
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                hintText: 'Passcode',
+                errorText: _errorText,
+                filled: true,
+                fillColor: const Color(0xFFEAF1ED),
+                border: const OutlineInputBorder(
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onSubmitted: (_) {
+                if (_submitting) return;
+                _submit();
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: _submitting
+              ? null
+              : () {
+                  _submit();
+                },
+          child: _submitting
+              ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Unlock'),
+        ),
+      ],
+    );
+  }
+}
+
 class _EmptyStateCard extends StatelessWidget {
   const _EmptyStateCard({
+    this.icon = Icons.menu_book_outlined,
     required this.title,
     required this.subtitle,
     required this.ctaText,
     required this.onTap,
   });
 
+  final IconData icon;
   final String title;
   final String subtitle;
   final String ctaText;
@@ -341,7 +562,7 @@ class _EmptyStateCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               alignment: Alignment.center,
-              child: const Icon(Icons.menu_book_outlined, color: Color(0xFF2D5A44)),
+              child: Icon(icon, color: const Color(0xFF2D5A44)),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -599,7 +820,10 @@ class _JournalEntryScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEAF1ED),
                     borderRadius: BorderRadius.circular(999),
@@ -638,7 +862,8 @@ class _JournalEditorScreen extends ConsumerStatefulWidget {
   final JournalEntity? existing;
 
   @override
-  ConsumerState<_JournalEditorScreen> createState() => _JournalEditorScreenState();
+  ConsumerState<_JournalEditorScreen> createState() =>
+      _JournalEditorScreenState();
 }
 
 class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
@@ -688,7 +913,11 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
     final notifier = ref.read(journalViewModelProvider.notifier);
     final existing = widget.existing;
     final ok = existing == null
-        ? await notifier.createEntry(title: title, content: content, date: _date)
+        ? await notifier.createEntry(
+            title: title,
+            content: content,
+            date: _date,
+          )
         : await notifier.updateEntry(
             id: existing.id,
             title: title,
@@ -702,7 +931,8 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.existing != null;
-    final saving = ref.watch(journalViewModelProvider).status == JournalStatus.saving;
+    final saving =
+        ref.watch(journalViewModelProvider).status == JournalStatus.saving;
     final dateText = DateFormat('EEE, MMM d, yyyy').format(_date);
 
     return Scaffold(

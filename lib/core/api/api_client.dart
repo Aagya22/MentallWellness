@@ -150,6 +150,9 @@ class ApiClient {
 class _AuthInterceptor extends Interceptor {
   final _storage = const FlutterSecureStorage();
   static const String _tokenKey = 'auth_token';
+  static const String _journalAccessTokenKey = 'journal_access_token';
+  static const String _journalAccessTokenExpiresAtKey =
+      'journal_access_token_expires_at_ms';
 
   @override
   void onRequest(
@@ -170,17 +173,54 @@ class _AuthInterceptor extends Interceptor {
       }
     }
 
+    // Attach journal unlock token only for journal endpoints.
+    if (options.path.startsWith(ApiEndpoints.journals)) {
+      final expiresAtRaw = await _storage.read(
+        key: _journalAccessTokenExpiresAtKey,
+      );
+      final token = await _storage.read(key: _journalAccessTokenKey);
+
+      final expiresAtMs = expiresAtRaw != null
+          ? int.tryParse(expiresAtRaw)
+          : null;
+      final isExpired =
+          expiresAtMs != null &&
+          DateTime.now().millisecondsSinceEpoch >= expiresAtMs;
+
+      if (isExpired) {
+        await Future.wait([
+          _storage.delete(key: _journalAccessTokenKey),
+          _storage.delete(key: _journalAccessTokenExpiresAtKey),
+        ]);
+      } else if (token != null && token.isNotEmpty) {
+        options.headers['x-journal-access-token'] = token;
+      }
+    }
+
     handler.next(options);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 Unauthorized - token expired
-    if (err.response?.statusCode == 401) {
-      // Clear token and redirect to login
-      _storage.delete(key: _tokenKey);
-      // You can add navigation logic here or use a callback
+    final status = err.response?.statusCode;
+    final path = err.requestOptions.path;
+
+    // Journal unlock token expired/invalid.
+    if (status == 403 &&
+        err.response?.data?['code'] == 'JOURNAL_PASSCODE_INVALID') {
+      _storage.delete(key: _journalAccessTokenKey);
+      _storage.delete(key: _journalAccessTokenExpiresAtKey);
     }
+
+    final isJournalPasscodeEndpoint =
+        path == ApiEndpoints.journalPasscode ||
+        path == ApiEndpoints.journalPasscodeVerify;
+    if (status == 401 && !isJournalPasscodeEndpoint) {
+      _storage.delete(key: _tokenKey);
+      _storage.delete(key: _journalAccessTokenKey);
+      _storage.delete(key: _journalAccessTokenExpiresAtKey);
+    }
+
     handler.next(err);
   }
 }
