@@ -51,7 +51,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     });
   }
 
-  Future<void> _showUnlockDialog() async {
+  Future<bool> _showUnlockDialog() async {
     final notifier = ref.read(journalViewModelProvider.notifier);
     final unlocked = await showDialog<bool>(
       context: context,
@@ -75,6 +75,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         notifier.fetchJournals(q: query.isEmpty ? null : query);
       });
     }
+
+    return unlocked == true;
   }
 
   @override
@@ -84,8 +86,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       if (next.status == JournalStatus.error && next.errorMessage != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
         });
       }
     });
@@ -113,7 +116,13 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
               onTap: () async {
-                final ok = await Navigator.of(context).push<bool>(
+                final navigator = Navigator.of(context);
+                if (state.passcodeRequired == true) {
+                  final ok = await _showUnlockDialog();
+                  if (!mounted) return;
+                  if (ok != true) return;
+                }
+                final ok = await navigator.push<bool>(
                   MaterialPageRoute(
                     builder: (_) => const _JournalEditorScreen(),
                   ),
@@ -189,7 +198,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                             subtitle:
                                 'Enter your passcode to view your entries.',
                             ctaText: 'Unlock journal',
-                            onTap: _showUnlockDialog,
+                            onTap: () {
+                              _showUnlockDialog();
+                            },
                           ),
                         ],
                       );
@@ -237,7 +248,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                                   state.journals.isNotEmpty
                               ? 1
                               : 0),
-                        separatorBuilder: (context, index) =>
+                      separatorBuilder: (context, index) =>
                           const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         if (index >= state.journals.length) {
@@ -403,16 +414,17 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _UnlockJournalDialog extends StatefulWidget {
+class _UnlockJournalDialog extends ConsumerStatefulWidget {
   const _UnlockJournalDialog({required this.onUnlock});
 
   final Future<String?> Function(String passcode) onUnlock;
 
   @override
-  State<_UnlockJournalDialog> createState() => _UnlockJournalDialogState();
+  ConsumerState<_UnlockJournalDialog> createState() =>
+      _UnlockJournalDialogState();
 }
 
-class _UnlockJournalDialogState extends State<_UnlockJournalDialog> {
+class _UnlockJournalDialogState extends ConsumerState<_UnlockJournalDialog> {
   final _passcodeController = TextEditingController();
   String? _errorText;
   var _submitting = false;
@@ -487,9 +499,7 @@ class _UnlockJournalDialogState extends State<_UnlockJournalDialog> {
                 errorText: _errorText,
                 filled: true,
                 fillColor: const Color(0xFFEAF1ED),
-                border: const OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                ),
+                border: const OutlineInputBorder(borderSide: BorderSide.none),
               ),
               onSubmitted: (_) {
                 if (_submitting) return;
@@ -501,7 +511,9 @@ class _UnlockJournalDialogState extends State<_UnlockJournalDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _submitting ? null : () => Navigator.of(context).pop(false),
+          onPressed: _submitting
+              ? null
+              : () => Navigator.of(context).pop(false),
           child: const Text('Cancel'),
         ),
         TextButton(

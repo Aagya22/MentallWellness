@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mentalwellness/core/services/security/biometric_auth_service.dart';
+import 'package:mentalwellness/core/services/security/biometric_login_credential_service.dart';
+import 'package:mentalwellness/core/services/security/biometric_settings_service.dart';
 import 'package:mentalwellness/features/journal/domain/usecases/clear_journal_passcode_usecase.dart';
 import 'package:mentalwellness/features/journal/domain/usecases/get_journal_passcode_status_usecase.dart';
 import 'package:mentalwellness/features/journal/domain/usecases/set_journal_passcode_usecase.dart';
@@ -31,12 +34,18 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
   _JournalPasscodeMode _mode = _JournalPasscodeMode.none;
   String? _actionError;
 
+  bool _biometricChecking = true;
+  bool _biometricSupported = false;
+  bool _biometricBusy = false;
+  bool _biometricLoginEnabled = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadStatus();
+      _loadBiometricSettings();
     });
   }
 
@@ -64,10 +73,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
 
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: background,
-      ),
+      SnackBar(content: Text(message), backgroundColor: background),
     );
   }
 
@@ -99,11 +105,97 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
       (enabled) {
         setState(() {
           _enabled = enabled;
-          _mode = enabled ? _JournalPasscodeMode.none : _JournalPasscodeMode.enable;
+          _mode = enabled
+              ? _JournalPasscodeMode.none
+              : _JournalPasscodeMode.enable;
           _loading = false;
         });
       },
     );
+  }
+
+  Future<void> _loadBiometricSettings() async {
+    final settings = ref.read(biometricSettingsServiceProvider);
+    setState(() {
+      _biometricChecking = true;
+      _biometricLoginEnabled = settings.isBiometricLoginEnabled();
+    });
+
+    final supported = await ref
+        .read(biometricAuthServiceProvider)
+        .isBiometricSupported();
+    if (!mounted) return;
+
+    setState(() {
+      _biometricSupported = supported;
+      _biometricChecking = false;
+    });
+
+    if (supported) return;
+
+    if (_biometricLoginEnabled) {
+      await settings.setBiometricLoginEnabled(false);
+      await ref
+          .read(biometricLoginCredentialServiceProvider)
+          .clearCredentials();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _biometricLoginEnabled = false;
+    });
+  }
+
+  Future<void> _toggleBiometricLogin(bool next) async {
+    if (_biometricBusy) return;
+
+    final settings = ref.read(biometricSettingsServiceProvider);
+
+    if (!next) {
+      setState(() => _biometricBusy = true);
+      await settings.setBiometricLoginEnabled(false);
+      await ref
+          .read(biometricLoginCredentialServiceProvider)
+          .clearCredentials();
+      if (!mounted) return;
+      setState(() {
+        _biometricLoginEnabled = false;
+        _biometricBusy = false;
+      });
+      return;
+    }
+
+    if (_biometricChecking || !_biometricSupported) {
+      _showSnack(
+        'Biometrics not available on this device',
+        background: Colors.red,
+      );
+      return;
+    }
+
+    setState(() => _biometricBusy = true);
+    final biometricAuth = ref.read(biometricAuthServiceProvider);
+    final ok = await biometricAuth.authenticate(
+      reason: 'Enable biometric login',
+    );
+    if (!mounted) return;
+
+    if (!ok) {
+      setState(() => _biometricBusy = false);
+      final message =
+          biometricAuth.userFriendlyError ??
+          'Biometric authentication failed. Set up biometrics in your device settings and try again.';
+      _showSnack(message, background: Colors.red);
+      return;
+    }
+
+    await settings.setBiometricLoginEnabled(true);
+    if (!mounted) return;
+    setState(() {
+      _biometricLoginEnabled = true;
+      _biometricBusy = false;
+    });
+    _showSnack('Biometric login enabled', background: Colors.green);
   }
 
   bool _isValidPasscode(String value) {
@@ -145,6 +237,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
       },
       (_) async {
         _resetFields();
+
         _showSnack(
           isUpdate ? 'Journal passcode updated' : 'Journal passcode enabled',
           background: Colors.green,
@@ -194,7 +287,9 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
     setState(() {
       _actionError = null;
       if (_mode == mode) {
-        _mode = _enabled ? _JournalPasscodeMode.none : _JournalPasscodeMode.enable;
+        _mode = _enabled
+            ? _JournalPasscodeMode.none
+            : _JournalPasscodeMode.enable;
       } else {
         _mode = mode;
       }
@@ -241,10 +336,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                         color: const Color(0xFFEAF1ED),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(
-                        Icons.lock_outline,
-                        color: _accent,
-                      ),
+                      child: Icon(Icons.lock_outline, color: _accent),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -332,14 +424,18 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                             OutlinedButton(
                               onPressed: (_saving || _loading)
                                   ? null
-                                  : () => _toggleMode(_JournalPasscodeMode.change),
+                                  : () => _toggleMode(
+                                      _JournalPasscodeMode.change,
+                                    ),
                               child: const Text('Change'),
                             ),
                             const SizedBox(width: 8),
                             OutlinedButton(
                               onPressed: (_saving || _loading)
                                   ? null
-                                  : () => _toggleMode(_JournalPasscodeMode.disable),
+                                  : () => _toggleMode(
+                                      _JournalPasscodeMode.disable,
+                                    ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.red,
                                 side: const BorderSide(color: Colors.red),
@@ -448,9 +544,11 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : Text(_mode == _JournalPasscodeMode.enable
-                                  ? 'Enable'
-                                  : 'Update'),
+                              : Text(
+                                  _mode == _JournalPasscodeMode.enable
+                                      ? 'Enable'
+                                      : 'Update',
+                                ),
                         ),
                       ),
                       if (_enabled) ...[
@@ -565,6 +663,124 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                     height: 1.45,
                   ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _border, width: 1.5),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      height: 44,
+                      width: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF1ED),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.fingerprint, color: _accent),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Biometrics',
+                            style: TextStyle(
+                              fontFamily: 'Inter Bold',
+                              fontSize: 14,
+                              color: _text,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Use fingerprint/Face ID for quick access.',
+                            style: TextStyle(
+                              fontFamily: 'Inter Regular',
+                              fontSize: 12,
+                              color: Color(0xFF6C7A71),
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F4ED),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _border, width: 1.2),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.login, size: 18, color: _accent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Biometric login',
+                              style: TextStyle(
+                                fontFamily: 'Inter Bold',
+                                fontSize: 13,
+                                color: _text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Require biometrics to open the app when you\'re logged in.',
+                              style: TextStyle(
+                                fontFamily: 'Inter Regular',
+                                fontSize: 12,
+                                color: _text.withValues(alpha: 153),
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _biometricLoginEnabled,
+                        onChanged:
+                            (_biometricBusy ||
+                                _biometricChecking ||
+                                !_biometricSupported)
+                            ? null
+                            : _toggleBiometricLogin,
+                        activeThumbColor: _accent,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (!_biometricChecking && !_biometricSupported) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Biometrics are not available on this device.',
+                    style: TextStyle(
+                      fontFamily: 'Inter Regular',
+                      fontSize: 12,
+                      color: _text.withValues(alpha: 153),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

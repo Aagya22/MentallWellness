@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/core/services/connectivity/network_info.dart';
+import 'package:mentalwellness/core/services/security/journal_passcode_cache_service.dart';
 import 'package:mentalwellness/core/services/storage/journal_access_token_service.dart';
 import 'package:mentalwellness/core/services/storage/token_service.dart';
 import '../../../../core/error/failures.dart';
@@ -18,12 +19,14 @@ final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   final networkInfo = ref.read(networkInfoProvider);
   final tokenService = ref.read(tokenServiceProvider);
   final journalAccessTokenService = ref.read(journalAccessTokenServiceProvider);
+  final journalPasscodeCacheService = ref.read(journalPasscodeCacheServiceProvider);
   return AuthRepository(
     authLocalDatasource: authLocalDatasource,
     authRemoteDatasource: authRemoteDatasource,
     networkInfo: networkInfo,
     tokenService: tokenService,
     journalAccessTokenService: journalAccessTokenService,
+    journalPasscodeCacheService: journalPasscodeCacheService,
   );
 });
 
@@ -33,6 +36,7 @@ class AuthRepository implements IAuthRepository {
   final INetworkInfo _networkInfo;
   final TokenService _tokenService;
   final JournalAccessTokenService _journalAccessTokenService;
+  final JournalPasscodeCacheService _journalPasscodeCacheService;
 
   AuthRepository({
     required AuthLocalDataSource authLocalDatasource,
@@ -40,11 +44,13 @@ class AuthRepository implements IAuthRepository {
     required INetworkInfo networkInfo,
     required TokenService tokenService,
     required JournalAccessTokenService journalAccessTokenService,
+    required JournalPasscodeCacheService journalPasscodeCacheService,
   }) : _authLocalDataSource = authLocalDatasource,
        _authRemoteDatasource = authRemoteDatasource,
        _networkInfo = networkInfo,
        _tokenService = tokenService,
-       _journalAccessTokenService = journalAccessTokenService;
+       _journalAccessTokenService = journalAccessTokenService,
+       _journalPasscodeCacheService = journalPasscodeCacheService;
   // Simple helper to check connectivity
   Future<bool> _isConnected() => _networkInfo.isConnected;
 
@@ -165,6 +171,7 @@ class AuthRepository implements IAuthRepository {
       final localResult = await _authLocalDataSource.logout();
       await _tokenService.removeToken();
       await _journalAccessTokenService.removeToken();
+      await _journalPasscodeCacheService.clearPasscode();
       // Optionally notify server if online (not implemented)
       return Right(localResult);
     } catch (e) {
