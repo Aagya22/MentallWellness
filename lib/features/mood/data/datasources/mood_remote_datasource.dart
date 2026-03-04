@@ -3,6 +3,7 @@ import 'package:mentalwellness/core/api/api_client.dart';
 import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/features/mood/data/models/mood_api_model.dart';
 import 'package:mentalwellness/features/mood/data/models/mood_overview_api_model.dart';
+import 'package:mentalwellness/features/mood/data/models/mood_range_api_model.dart';
 
 final moodRemoteDatasourceProvider = Provider<MoodRemoteDatasource>((ref) {
   return MoodRemoteDatasource(apiClient: ref.read(apiClientProvider));
@@ -53,5 +54,24 @@ class MoodRemoteDatasource {
     }
 
     throw Exception(res.data['message'] ?? 'Failed to save mood');
+  }
+
+  Future<List<MoodRangeApiModel>> getMoodsInRange({
+    required String from,
+    required String to,
+  }) async {
+    final res = await _apiClient.get(
+      ApiEndpoints.moodsRange,
+      queryParameters: {'from': from, 'to': to},
+    );
+
+    if (res.data['success'] == true) {
+      final list = (res.data['data'] as List).cast<dynamic>();
+      return list
+          .map((e) => MoodRangeApiModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw Exception(res.data['message'] ?? 'Failed to fetch moods');
   }
 }

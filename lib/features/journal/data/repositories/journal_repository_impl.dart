@@ -35,10 +35,16 @@ class JournalRepositoryImpl implements IJournalRepository {
       final models = await _remote.getJournals(q: q);
       return Right(models.map((m) => m.toEntity()).toList());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+          code: e.response?.data?['code']?.toString(),
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -62,10 +68,16 @@ class JournalRepositoryImpl implements IJournalRepository {
       );
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+          code: e.response?.data?['code']?.toString(),
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -91,10 +103,16 @@ class JournalRepositoryImpl implements IJournalRepository {
       );
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+          code: e.response?.data?['code']?.toString(),
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -110,10 +128,16 @@ class JournalRepositoryImpl implements IJournalRepository {
       await _remote.deleteJournal(id: id);
       return const Right(true);
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+          code: e.response?.data?['code']?.toString(),
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }

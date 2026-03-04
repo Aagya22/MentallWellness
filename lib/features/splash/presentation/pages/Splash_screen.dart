@@ -18,25 +18,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          final isLoggedIn = ref.read(userSessionServiceProvider).isLoggedIn();
-          if (isLoggedIn) {
-            Navigator.pushReplacementNamed(context, '/BottomNavigationScreen');
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const OnboardingfirstScreen()),
-            );
-          }
-        }
-      })
-      ..forward();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 3))
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              final isLoggedIn = ref
+                  .read(userSessionServiceProvider)
+                  .isLoggedIn();
+              if (isLoggedIn) {
+                final role = ref
+                    .read(userSessionServiceProvider)
+                    .getCurrentUserRole();
+                if (role == 'admin') {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/AdminBottomNavigationScreen',
+                  );
+                } else {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/BottomNavigationScreen',
+                  );
+                }
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OnboardingfirstScreen(),
+                  ),
+                );
+              }
+            }
+          })
+          ..forward();
   }
 
   @override

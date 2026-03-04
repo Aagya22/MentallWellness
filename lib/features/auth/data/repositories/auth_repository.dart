@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/core/services/connectivity/network_info.dart';
+import 'package:mentalwellness/core/services/storage/journal_access_token_service.dart';
+import 'package:mentalwellness/core/services/storage/token_service.dart';
 import '../../../../core/error/failures.dart';
 import '../datasources/local/auth_local_datasource.dart';
 import '../datasources/remote/auth_remote_datasource.dart';
@@ -14,10 +16,14 @@ final authRepositoryProvider = Provider<IAuthRepository>((ref) {
   final authLocalDatasource = ref.read(authLocalDataSourceProvider);
   final authRemoteDatasource = ref.read(authRemoteDatasourceProvider);
   final networkInfo = ref.read(networkInfoProvider);
+  final tokenService = ref.read(tokenServiceProvider);
+  final journalAccessTokenService = ref.read(journalAccessTokenServiceProvider);
   return AuthRepository(
     authLocalDatasource: authLocalDatasource,
     authRemoteDatasource: authRemoteDatasource,
     networkInfo: networkInfo,
+    tokenService: tokenService,
+    journalAccessTokenService: journalAccessTokenService,
   );
 });
 
@@ -25,15 +31,20 @@ class AuthRepository implements IAuthRepository {
   final AuthLocalDataSource _authLocalDataSource;
   final AuthRemoteDatasource _authRemoteDatasource;
   final INetworkInfo _networkInfo;
+  final TokenService _tokenService;
+  final JournalAccessTokenService _journalAccessTokenService;
 
   AuthRepository({
     required AuthLocalDataSource authLocalDatasource,
     required AuthRemoteDatasource authRemoteDatasource,
     required INetworkInfo networkInfo,
-  })
-      : _authLocalDataSource = authLocalDatasource,
-        _authRemoteDatasource = authRemoteDatasource,
-        _networkInfo = networkInfo;
+    required TokenService tokenService,
+    required JournalAccessTokenService journalAccessTokenService,
+  }) : _authLocalDataSource = authLocalDatasource,
+       _authRemoteDatasource = authRemoteDatasource,
+       _networkInfo = networkInfo,
+       _tokenService = tokenService,
+       _journalAccessTokenService = journalAccessTokenService;
   // Simple helper to check connectivity
   Future<bool> _isConnected() => _networkInfo.isConnected;
 
@@ -46,7 +57,9 @@ class AuthRepository implements IAuthRepository {
       if (!connected) {
         final existing = await _authLocalDataSource.getUserByEmail(user.email);
         if (existing != null) {
-          return const Left(LocalDatabaseFailure(message: 'This email is already registered'));
+          return const Left(
+            LocalDatabaseFailure(message: 'This email is already registered'),
+          );
         }
         await _authLocalDataSource.register(AuthHiveModel.fromEntity(user));
         return const Right(true);
@@ -60,7 +73,11 @@ class AuthRepository implements IAuthRepository {
       } catch (e) {
         // Remote failed: fallback to local register
         final existing = await _authLocalDataSource.getUserByEmail(user.email);
-        if (existing != null) return const Left(LocalDatabaseFailure(message: 'This email is already registered'));
+        if (existing != null) {
+          return const Left(
+            LocalDatabaseFailure(message: 'This email is already registered'),
+          );
+        }
         await _authLocalDataSource.register(AuthHiveModel.fromEntity(user));
         return const Right(true);
       }
@@ -70,7 +87,10 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthEntity>> login(String email, String password) async {
+  Future<Either<Failure, AuthEntity>> login(
+    String email,
+    String password,
+  ) async {
     try {
       final connected = await _isConnected();
 
@@ -83,18 +103,30 @@ class AuthRepository implements IAuthRepository {
             await _authLocalDataSource.login(email, password);
             return Right(apiUser.toEntity());
           }
-          return const Left(LocalDatabaseFailure(message: 'Invalid credentials. Please try again.'));
+          return const Left(
+            LocalDatabaseFailure(
+              message: 'Invalid credentials. Please try again.',
+            ),
+          );
         } catch (_) {
           // Remote failed -> try local
           final localUser = await _authLocalDataSource.login(email, password);
           if (localUser != null) return Right(localUser.toEntity());
-          return const Left(LocalDatabaseFailure(message: 'Invalid credentials. Please try again.'));
+          return const Left(
+            LocalDatabaseFailure(
+              message: 'Invalid credentials. Please try again.',
+            ),
+          );
         }
       } else {
         // Offline: local login only
         final localUser = await _authLocalDataSource.login(email, password);
         if (localUser != null) return Right(localUser.toEntity());
-        return const Left(LocalDatabaseFailure(message: 'Invalid credentials. Please try again.'));
+        return const Left(
+          LocalDatabaseFailure(
+            message: 'Invalid credentials. Please try again.',
+          ),
+        );
       }
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
@@ -110,7 +142,9 @@ class AuthRepository implements IAuthRepository {
 
       if (connected && local != null && local.authId != null) {
         try {
-          final apiUser = await _authRemoteDatasource.getUserById(local.authId!);
+          final apiUser = await _authRemoteDatasource.getUserById(
+            local.authId!,
+          );
           if (apiUser != null) return Right(apiUser.toEntity());
         } catch (_) {
           // ignore and fall back to local
@@ -129,10 +163,14 @@ class AuthRepository implements IAuthRepository {
     try {
       // Always clear local session
       final localResult = await _authLocalDataSource.logout();
+      await _tokenService.removeToken();
+      await _journalAccessTokenService.removeToken();
       // Optionally notify server if online (not implemented)
       return Right(localResult);
     } catch (e) {
-      return Left(LocalDatabaseFailure(message: 'Logout failed: ${e.toString()}'));
+      return Left(
+        LocalDatabaseFailure(message: 'Logout failed: ${e.toString()}'),
+      );
     }
   }
 
@@ -142,7 +180,9 @@ class AuthRepository implements IAuthRepository {
       // Simple approach: check local first, do not call remote by email
       final local = await _authLocalDataSource.getUserByEmail(email);
       if (local != null) return Right(local.toEntity());
-      return const Left(LocalDatabaseFailure(message: 'No user found with this email'));
+      return const Left(
+        LocalDatabaseFailure(message: 'No user found with this email'),
+      );
     } catch (e) {
       return Left(LocalDatabaseFailure(message: e.toString()));
     }

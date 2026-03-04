@@ -6,17 +6,22 @@ abstract class Failure extends Equatable {
   const Failure(this.message);
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
 
 class LocalDatabaseFailure extends Failure {
-  const LocalDatabaseFailure({String message = "Local Database Operation Failure"})
-    : super(message);
+  const LocalDatabaseFailure({
+    String message = "Local Database Operation Failure",
+  }) : super(message);
 }
 
 class ApiFailure extends Failure {
   final int? statusCode;
+  final String? code;
 
-  const ApiFailure({String message = "API Failure", this.statusCode})
+  const ApiFailure({String message = "API Failure", this.statusCode, this.code})
     : super(message);
+
+  @override
+  List<Object?> get props => [message, statusCode, code];
 }

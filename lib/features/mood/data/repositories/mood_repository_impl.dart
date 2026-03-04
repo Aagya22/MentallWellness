@@ -6,6 +6,7 @@ import 'package:mentalwellness/core/services/connectivity/network_info.dart';
 import 'package:mentalwellness/features/mood/data/datasources/mood_remote_datasource.dart';
 import 'package:mentalwellness/features/mood/domain/entities/mood_entity.dart';
 import 'package:mentalwellness/features/mood/domain/entities/mood_overview_entity.dart';
+import 'package:mentalwellness/features/mood/domain/entities/mood_range_entity.dart';
 import 'package:mentalwellness/features/mood/domain/repositories/mood_repository.dart';
 
 final moodRepositoryProvider = Provider<IMoodRepository>((ref) {
@@ -55,6 +56,30 @@ class MoodRepositoryImpl implements IMoodRepository {
       final models = await _remote.getMoods();
       final list = models.map((m) => m.toEntity()).toList();
       list.sort((a, b) => b.date.compareTo(a.date));
+      return Right(list);
+    } on DioException catch (e) {
+      return Left(ApiFailure(
+        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
+        statusCode: e.response?.statusCode,
+      ));
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<MoodRangeEntity>>> getMoodsInRange({
+    required String from,
+    required String to,
+  }) async {
+    try {
+      final connected = await _isConnected();
+      if (!connected) {
+        return const Left(ApiFailure(message: 'No internet connection'));
+      }
+      final models = await _remote.getMoodsInRange(from: from, to: to);
+      final list = models.map((m) => m.toEntity()).toList();
+      list.sort((a, b) => a.dayKey.compareTo(b.dayKey));
       return Right(list);
     } on DioException catch (e) {
       return Left(ApiFailure(

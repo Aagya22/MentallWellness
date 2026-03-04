@@ -7,6 +7,12 @@ import 'package:mentalwellness/features/dashboard/presentation/pages/botton_navi
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding2nd_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding3rd_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboardingfirst_screen.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_dashboard_screen.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_users_screen.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_bottom_navigation_screen.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_user_create_screen.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_user_detail_screen.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_user_edit_screen.dart';
 import 'package:mentalwellness/app/theme/theme_data.dart';
 
 class App extends StatelessWidget {
@@ -16,20 +22,25 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme:getApplicationTheme(
-      ),
+      theme: getApplicationTheme(),
       initialRoute: '/SplashScreen',
-      routes:{
+      routes: {
         '/SplashScreen': (context) => const SplashScreen(),
         '/OnboardingfirstScreen': (context) => const OnboardingfirstScreen(),
-        '/Onboarding2ndScreen':(context)=>const Onboarding2ndScreen(),
-        '/Onboarding3rdScreen':(context)=>const Onboarding3rdScreen(),
-        '/LandingScreen':(context)=> const LandingScreen(),
-        '/LoginScreen':(context)=>const LoginScreen(),
-        '/RegisterScreen':(context)=>const RegisterScreen(),
-        '/BottomNavigationScreen':(context)=>const BottomNavigationScreen(),
-
-      }
+        '/Onboarding2ndScreen': (context) => const Onboarding2ndScreen(),
+        '/Onboarding3rdScreen': (context) => const Onboarding3rdScreen(),
+        '/LandingScreen': (context) => const LandingScreen(),
+        '/LoginScreen': (context) => const LoginScreen(),
+        '/RegisterScreen': (context) => const RegisterScreen(),
+        '/BottomNavigationScreen': (context) => const BottomNavigationScreen(),
+        '/AdminDashboardScreen': (context) => const AdminDashboardScreen(),
+        '/AdminUsersScreen': (context) => const AdminUsersScreen(),
+        '/AdminBottomNavigationScreen': (context) =>
+            const AdminBottomNavigationScreen(),
+        '/AdminUserCreateScreen': (context) => const AdminUserCreateScreen(),
+        '/AdminUserDetailScreen': (context) => const AdminUserDetailScreen(),
+        '/AdminUserEditScreen': (context) => const AdminUserEditScreen(),
+      },
     );
   }
 }
