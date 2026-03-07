@@ -162,9 +162,7 @@ class _AuthInterceptor extends Interceptor {
     // Skip auth header only for public auth endpoints.
     final isPublicAuthEndpoint =
         options.path == ApiEndpoints.userLogin ||
-        options.path == ApiEndpoints.userRegister ||
-        options.path == ApiEndpoints.requestPasswordReset ||
-        options.path.startsWith(ApiEndpoints.resetPassword);
+        options.path == ApiEndpoints.userRegister;
 
     if (!isPublicAuthEndpoint) {
       final token = await _storage.read(key: _tokenKey);

@@ -8,6 +8,7 @@ import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_bottom_navigation_screen.dart';
 import 'package:mentalwellness/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:mentalwellness/features/auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:mentalwellness/features/settings/presentation/pages/change_password_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AdminSettingsTab extends ConsumerStatefulWidget {
@@ -465,6 +466,43 @@ class _AdminSettingsTabState extends ConsumerState<AdminSettingsTab> {
                   ),
 
                 if (!_isEditing) const SizedBox(height: 24),
+
+                if (!_isEditing)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEEF2FF),
+                          foregroundColor: kAdminPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: const BorderSide(color: Color(0xFFC7D2FE)),
+                          ),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(Icons.lock_reset_rounded, size: 20),
+                        label: const Text(
+                          'Change Password',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ChangePasswordScreen(
+                                isAdminTheme: true,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
 
                 // ── Logout button ────────────────────────────────────────
                 Padding(

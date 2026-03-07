@@ -24,8 +24,7 @@ class ApiEndpoints {
   static const String userRegister = '/api/auth/register';
   static const String userUpdateProfile = '/api/auth/update-profile';
   static const String userWhoAmI = '/api/auth/whoami';
-  static const String requestPasswordReset = '/api/auth/request-password-reset';
-  static const String resetPassword = '/api/auth/reset-password';
+  static const String changePassword = '/api/auth/change-password';
 
   // Journal passcode
   static const String journalPasscode = '/api/auth/journal-passcode';

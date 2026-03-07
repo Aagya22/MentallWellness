@@ -110,19 +110,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
 
       if (!ok) {
-        final message = biometricAuth.userFriendlyError ??
+        final message =
+            biometricAuth.userFriendlyError ??
             'Biometric authentication failed. Set up biometrics in your device settings and try again.';
         setState(() => _biometricBusy = false);
-        showMySnackBar(
-          context: context,
-          message: message,
-          color: Colors.red,
-        );
+        showMySnackBar(context: context, message: message, color: Colors.red);
         return;
       }
 
-      final creds =
-          await ref.read(biometricLoginCredentialServiceProvider).getCredentials();
+      final creds = await ref
+          .read(biometricLoginCredentialServiceProvider)
+          .getCredentials();
       if (!mounted) return;
 
       if (creds == null) {
@@ -302,7 +300,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 10),
 
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
@@ -319,15 +316,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: TextStyle(fontSize: 13),
                         ),
                       ],
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/ForgotpasswordScreen');
-                      },
-                      child: const Text(
-                        "Forgot password ?",
-                        style: TextStyle(fontSize: 13, color: Colors.red),
-                      ),
                     ),
                   ],
                 ),
@@ -353,18 +341,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: 12),
 
-                if (_biometricLoginEnabled && !_biometricChecking && _biometricSupported)
+                if (_biometricLoginEnabled &&
+                    !_biometricChecking &&
+                    _biometricSupported)
                   SizedBox(
                     width: 220,
                     height: 46,
                     child: OutlinedButton.icon(
                       onPressed:
-                          (authState.status == AuthStatus.loading || _biometricBusy)
-                              ? null
-                              : _loginWithBiometrics,
+                          (authState.status == AuthStatus.loading ||
+                              _biometricBusy)
+                          ? null
+                          : _loginWithBiometrics,
                       icon: const Icon(Icons.fingerprint),
                       label: Text(
-                        _biometricBusy ? 'AUTHENTICATING...' : 'Use fingerprint',
+                        _biometricBusy
+                            ? 'AUTHENTICATING...'
+                            : 'Use fingerprint',
                       ),
                     ),
                   ),
