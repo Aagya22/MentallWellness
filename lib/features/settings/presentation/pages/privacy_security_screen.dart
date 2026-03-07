@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/core/services/security/biometric_auth_service.dart';
 import 'package:mentalwellness/core/services/security/biometric_login_credential_service.dart';
 import 'package:mentalwellness/core/services/security/biometric_settings_service.dart';
+import 'package:mentalwellness/core/services/sensors/light_sensor_settings_service.dart';
 import 'package:mentalwellness/features/journal/domain/usecases/clear_journal_passcode_usecase.dart';
 import 'package:mentalwellness/features/journal/domain/usecases/get_journal_passcode_status_usecase.dart';
 import 'package:mentalwellness/features/journal/domain/usecases/set_journal_passcode_usecase.dart';
@@ -38,6 +39,8 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
   bool _biometricSupported = false;
   bool _biometricBusy = false;
   bool _biometricLoginEnabled = false;
+  bool _lightSensorEnabled = true;
+  bool _lightSensorBusy = false;
 
   @override
   void initState() {
@@ -46,6 +49,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
       if (!mounted) return;
       _loadStatus();
       _loadBiometricSettings();
+      _loadLightSensorSettings();
     });
   }
 
@@ -196,6 +200,45 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
       _biometricBusy = false;
     });
     _showSnack('Biometric login enabled', background: Colors.green);
+  }
+
+  Future<void> _loadLightSensorSettings() async {
+    final settings = ref.read(lightSensorSettingsServiceProvider);
+    if (!mounted) return;
+
+    setState(() {
+      _lightSensorEnabled = settings.isLightSensorEnabled();
+    });
+  }
+
+  Future<void> _toggleLightSensor(bool next) async {
+    if (_lightSensorBusy) return;
+
+    setState(() => _lightSensorBusy = true);
+
+    try {
+      await ref
+          .read(lightSensorSettingsServiceProvider)
+          .setLightSensorEnabled(next);
+
+      if (!mounted) return;
+      setState(() {
+        _lightSensorEnabled = next;
+        _lightSensorBusy = false;
+      });
+
+      _showSnack(
+        next ? 'Light sensor enabled' : 'Light sensor disabled',
+        background: Colors.green,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _lightSensorBusy = false);
+      _showSnack(
+        'Failed to update light sensor setting',
+        background: Colors.red,
+      );
+    }
   }
 
   bool _isValidPasscode(String value) {
@@ -764,6 +807,58 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                                 !_biometricSupported)
                             ? null
                             : _toggleBiometricLogin,
+                        activeThumbColor: _accent,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7F4ED),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _border, width: 1.2),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.light_mode_outlined,
+                        size: 18,
+                        color: _accent,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Light sensor',
+                              style: TextStyle(
+                                fontFamily: 'Inter Bold',
+                                fontSize: 13,
+                                color: _text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Use ambient light in journal for environment guidance.',
+                              style: TextStyle(
+                                fontFamily: 'Inter Regular',
+                                fontSize: 12,
+                                color: _text.withValues(alpha: 153),
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _lightSensorEnabled,
+                        onChanged: _lightSensorBusy ? null : _toggleLightSensor,
                         activeThumbColor: _accent,
                       ),
                     ],

@@ -1,10 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mentalwellness/core/services/sensors/ambient_light_service.dart';
+import 'package:mentalwellness/core/services/sensors/light_sensor_settings_service.dart';
 import 'package:mentalwellness/features/journal/domain/entities/journal_entity.dart';
 import 'package:mentalwellness/features/journal/presentation/state/journal_state.dart';
 import 'package:mentalwellness/features/journal/presentation/view_model/journal_viewmodel.dart';
@@ -1206,6 +1207,7 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
   StreamSubscription<AmbientLightSample>? _ambientLightSub;
   AmbientLightLevel _ambientLightLevel = AmbientLightLevel.unknown;
   double? _ambientLightLux;
+  bool _ambientLightEnabled = true;
   bool _ambientLightAvailable = true;
 
   @override
@@ -1215,7 +1217,18 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
     _titleController = TextEditingController(text: existing?.title ?? '');
     _contentController = TextEditingController(text: existing?.content ?? '');
     _date = existing?.date ?? DateTime.now();
-    _startAmbientLightTracking();
+
+    _ambientLightEnabled = ref
+        .read(lightSensorSettingsServiceProvider)
+        .isLightSensorEnabled();
+
+    if (_ambientLightEnabled) {
+      _startAmbientLightTracking();
+    } else {
+      _ambientLightLevel = AmbientLightLevel.unknown;
+      _ambientLightLux = null;
+      _ambientLightAvailable = false;
+    }
   }
 
   @override
@@ -1373,22 +1386,32 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
     final palette = _JournalEnvironmentPalette.fromAmbientLevel(
       _ambientLightLevel,
     );
-    final ambientLevelText = _ambientLightAvailable
+    final ambientLevelText = !_ambientLightEnabled
+        ? 'Disabled'
+        : _ambientLightAvailable
         ? _ambientLevelLabel(_ambientLightLevel)
         : 'Unavailable';
     final ambientLuxText = _ambientLightLux == null
         ? '-- lx'
         : '${_ambientLightLux!.toStringAsFixed(0)} lx';
-    final ambientHintText = _ambientLightAvailable
+    final ambientHintText = !_ambientLightEnabled
+        ? 'Ambient light guidance is turned off in Privacy & Security.'
+        : _ambientLightAvailable
         ? _ambientThemeHint(_ambientLightLevel)
         : 'Ambient light sensor is not available on this device';
-    final ambientIcon = _ambientLevelIcon(_ambientLightLevel);
-    final ambientLevelColor = _ambientLevelColor(_ambientLightLevel);
+    final ambientIcon = _ambientLightEnabled
+        ? _ambientLevelIcon(_ambientLightLevel)
+        : Icons.light_mode_outlined;
+    final ambientLevelColor = _ambientLightEnabled
+        ? _ambientLevelColor(_ambientLightLevel)
+        : const Color(0xFF748278);
     const ambientMaxLux = 500.0;
     final clampedLux = _ambientLightLux == null
         ? 0.0
         : _ambientLightLux!.clamp(0.0, ambientMaxLux).toDouble();
-    final ambientProgress = clampedLux / ambientMaxLux;
+    final ambientProgress = _ambientLightEnabled
+        ? clampedLux / ambientMaxLux
+        : 0.0;
     final heroStart =
         Color.lerp(
           palette.buttonBackground,
