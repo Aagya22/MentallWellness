@@ -31,6 +31,20 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
     }
   }
 
+  Future<void> _editUser() async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return;
+
+    await Navigator.pushNamed(
+      context,
+      '/AdminUserEditScreen',
+      arguments: userId,
+    );
+
+    if (!mounted) return;
+    ref.read(adminUserCrudViewModelProvider.notifier).fetchUserById(userId);
+  }
+
   Future<void> _deleteUser() async {
     final userId = _userId;
     final user = ref.read(adminUserCrudViewModelProvider).user;
@@ -118,39 +132,12 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
                 fontSize: 17,
               ),
             ),
-            actions: [
-              IconButton(
-                tooltip: 'Edit',
-                icon: const Icon(
-                  Icons.edit_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                onPressed: () async {
-                  await Navigator.pushNamed(
-                    context,
-                    '/AdminUserEditScreen',
-                    arguments: userId,
-                  );
-                  if (!mounted) return;
-                  ref
-                      .read(adminUserCrudViewModelProvider.notifier)
-                      .fetchUserById(userId);
-                },
-              ),
-              IconButton(
-                tooltip: 'Delete',
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                onPressed: _deleteUser,
-              ),
-            ],
           ),
         ),
       ),
+      bottomNavigationBar: user == null
+          ? null
+          : _DetailActionBar(onEdit: _editUser, onDelete: _deleteUser),
       body: SafeArea(
         child: Builder(
           builder: (context) {
@@ -325,73 +312,7 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
                       ),
                     ),
                   ),
-
-                  // ── Action buttons ──────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kAdminPrimary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              icon: const Icon(Icons.edit_rounded, size: 18),
-                              label: const Text(
-                                'Edit',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              onPressed: () async {
-                                await Navigator.pushNamed(
-                                  context,
-                                  '/AdminUserEditScreen',
-                                  arguments: userId,
-                                );
-                                if (!mounted) return;
-                                ref
-                                    .read(
-                                      adminUserCrudViewModelProvider.notifier,
-                                    )
-                                    .fetchUserById(userId);
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFEF2F2),
-                                foregroundColor: const Color(0xFFDC2626),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              icon: const Icon(
-                                Icons.delete_outline_rounded,
-                                size: 18,
-                              ),
-                              label: const Text(
-                                'Delete',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              onPressed: _deleteUser,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -459,6 +380,80 @@ class _InfoRow extends StatelessWidget {
           ),
           if (trailing != null) trailing!,
         ],
+      ),
+    );
+  }
+}
+
+class _DetailActionBar extends StatelessWidget {
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _DetailActionBar({required this.onEdit, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAdminPrimary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.edit_rounded, size: 18),
+                  label: const Text(
+                    'Edit User',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  onPressed: onEdit,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                    backgroundColor: const Color(0xFFFEF2F2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text(
+                    'Delete',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  onPressed: onDelete,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

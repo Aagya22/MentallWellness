@@ -215,72 +215,6 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
                               search: snapshot.search,
                             );
                       },
-                      onEdit: () async {
-                        final snapshot = state;
-                        await Navigator.pushNamed(
-                          context,
-                          '/AdminUserEditScreen',
-                          arguments: user.id,
-                        );
-                        if (!context.mounted) return;
-                        await ref
-                            .read(adminUsersViewModelProvider.notifier)
-                            .refreshLoadedPages(
-                              loadedPages: snapshot.page,
-                              limit: snapshot.limit,
-                              search: snapshot.search,
-                            );
-                      },
-                      onDelete: () async {
-                        final ok =
-                            await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                title: const Text(
-                                  'Delete user?',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                content: Text(
-                                  'This will permanently remove ${user.fullName}.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red.shade600,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              ),
-                            ) ??
-                            false;
-
-                        if (!ok) return;
-                        final success = await ref
-                            .read(adminUsersViewModelProvider.notifier)
-                            .deleteUser(user.id);
-                        if (success && context.mounted) {
-                          showMySnackBar(
-                            context: context,
-                            message: 'User deleted',
-                            color: Colors.green,
-                          );
-                        }
-                      },
                     );
                   },
                 ),
@@ -301,8 +235,6 @@ class _UserCard extends StatelessWidget {
   final String role;
   final String? imageUrl;
   final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
   const _UserCard({
     required this.fullName,
@@ -312,8 +244,6 @@ class _UserCard extends StatelessWidget {
     required this.role,
     this.imageUrl,
     required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
   });
 
   @override
@@ -340,115 +270,111 @@ class _UserCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           children: [
-            // Avatar
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                gradient: hasImage
-                    ? null
-                    : LinearGradient(
-                        colors: isAdmin
-                            ? [kAdminPrimary, kAdminSecondary]
-                            : [
-                                const Color(0xFF10B981),
-                                const Color(0xFF059669),
-                              ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                color: hasImage ? const Color(0xFFE2E8F0) : null,
-                shape: BoxShape.circle,
-              ),
-              clipBehavior: Clip.antiAlias,
-              alignment: Alignment.center,
-              child: hasImage
-                  ? Image.network(
-                      ApiEndpoints.getImageUrl(imageUrl),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Text(
-                        initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    )
-                  : Text(
-                      initial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-            ),
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          fullName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: Color(0xFF1E293B),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: hasImage
+                        ? null
+                        : LinearGradient(
+                            colors: isAdmin
+                                ? [kAdminPrimary, kAdminSecondary]
+                                : [
+                                    const Color(0xFF10B981),
+                                    const Color(0xFF059669),
+                                  ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                    color: hasImage ? const Color(0xFFE2E8F0) : null,
+                    shape: BoxShape.circle,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  alignment: Alignment.center,
+                  child: hasImage
+                      ? Image.network(
+                          ApiEndpoints.getImageUrl(imageUrl),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Text(
+                            initial,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          initial,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              fullName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          _RoleBadge(role: role),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+
+                      Text(
+                        email,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '@$username${phone.isNotEmpty ? ' · $phone' : ''}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Colors.grey.shade400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Tap card to view details',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      _RoleBadge(role: role),
                     ],
                   ),
-                  const SizedBox(height: 3),
-
-                  Text(
-                    email,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '@$username${phone.isNotEmpty ? ' · $phone' : ''}',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.grey.shade400,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _IconBtn(
-                  icon: Icons.edit_rounded,
-                  color: kAdminPrimary,
-                  bgColor: const Color(0xFFEEF2FF),
-                  onTap: onEdit,
-                  tooltip: 'Edit',
-                ),
-                const SizedBox(height: 6),
-                _IconBtn(
-                  icon: Icons.delete_outline_rounded,
-                  color: Colors.red.shade600,
-                  bgColor: const Color(0xFFFEF2F2),
-                  onTap: onDelete,
-                  tooltip: 'Delete',
                 ),
               ],
             ),
@@ -485,41 +411,6 @@ class _RoleBadge extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: isAdmin ? kAdminSecondary : const Color(0xFF059669),
           letterSpacing: 0.3,
-        ),
-      ),
-    );
-  }
-}
-
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  final VoidCallback onTap;
-  final String tooltip;
-
-  const _IconBtn({
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-    required this.onTap,
-    required this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 16),
         ),
       ),
     );

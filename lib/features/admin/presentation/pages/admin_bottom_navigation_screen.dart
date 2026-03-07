@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_dashboard_tab.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_notification_center_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_settings_tab.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_users_tab.dart';
+import 'package:mentalwellness/features/admin/presentation/view_model/admin_notifications_viewmodel.dart';
 import 'package:mentalwellness/features/admin/presentation/view_model/admin_users_viewmodel.dart';
 
 const kAdminPrimary = Color(0xFF4F46E5);
@@ -23,7 +25,29 @@ class _AdminBottomNavigationScreenState
     extends ConsumerState<AdminBottomNavigationScreen> {
   int _selectedIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref
+          .read(adminNotificationsViewModelProvider.notifier)
+          .fetchNotifications(limit: 50);
+    });
+  }
+
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
+
+  Future<void> _openAdminNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AdminNotificationCenterScreen()),
+    );
+
+    if (!mounted) return;
+
+    await ref
+        .read(adminNotificationsViewModelProvider.notifier)
+        .fetchNotifications(limit: 50);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +93,9 @@ class _AdminBottomNavigationScreenState
                 ref
                     .read(adminUsersViewModelProvider.notifier)
                     .fetchUsers(page: 1);
+                ref
+                    .read(adminNotificationsViewModelProvider.notifier)
+                    .fetchNotifications(limit: 50);
               },
               child: const Icon(Icons.person_add_alt_1_rounded),
             )
@@ -79,6 +106,9 @@ class _AdminBottomNavigationScreenState
 
   PreferredSizeWidget _buildAppBar(String tabTitle) {
     final session = ref.read(userSessionServiceProvider);
+    final notificationsState = ref.watch(adminNotificationsViewModelProvider);
+    final unreadCount = notificationsState.unreadCount;
+
     final adminName = session.getCurrentUserFullName() ?? 'Administrator';
     final adminPic = session.getCurrentUserProfilePicture();
     final initial = adminName.isNotEmpty
@@ -169,6 +199,11 @@ class _AdminBottomNavigationScreenState
                     ],
                   ),
                 ),
+                _notificationAction(
+                  unreadCount: unreadCount,
+                  onTap: _openAdminNotifications,
+                ),
+                if (_selectedIndex == 1) const SizedBox(width: 8),
                 if (_selectedIndex == 1)
                   _headerAction(
                     icon: Icons.refresh_rounded,
@@ -186,6 +221,65 @@ class _AdminBottomNavigationScreenState
                   ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _notificationAction({
+    required int unreadCount,
+    required VoidCallback onTap,
+  }) {
+    final label = unreadCount > 99 ? '99+' : unreadCount.toString();
+
+    return Tooltip(
+      message: 'Notifications',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: -7,
+                  top: -7,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        height: 1.05,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
