@@ -177,8 +177,8 @@ class _AdminBottomNavigationScreenState
                       final s = ref.read(adminUsersViewModelProvider);
                       ref
                           .read(adminUsersViewModelProvider.notifier)
-                          .fetchUsers(
-                            page: s.page,
+                          .refreshLoadedPages(
+                            loadedPages: s.page,
                             limit: s.limit,
                             search: s.search,
                           );
