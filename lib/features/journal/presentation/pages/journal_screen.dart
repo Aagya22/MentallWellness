@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:mentalwellness/core/services/sensors/ambient_light_service.dart';
 import 'package:mentalwellness/features/journal/domain/entities/journal_entity.dart';
 import 'package:mentalwellness/features/journal/presentation/state/journal_state.dart';
 import 'package:mentalwellness/features/journal/presentation/view_model/journal_viewmodel.dart';
@@ -883,6 +886,11 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
   late final TextEditingController _contentController;
   DateTime _date = DateTime.now();
 
+  StreamSubscription<AmbientLightSample>? _ambientLightSub;
+  AmbientLightLevel _ambientLightLevel = AmbientLightLevel.unknown;
+  double? _ambientLightLux;
+  bool _ambientLightAvailable = true;
+
   @override
   void initState() {
     super.initState();
@@ -890,13 +898,67 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
     _titleController = TextEditingController(text: existing?.title ?? '');
     _contentController = TextEditingController(text: existing?.content ?? '');
     _date = existing?.date ?? DateTime.now();
+    _startAmbientLightTracking();
   }
 
   @override
   void dispose() {
+    unawaited(_stopAmbientLightTracking());
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
+  }
+
+  void _startAmbientLightTracking() {
+    _ambientLightSub?.cancel();
+
+    final service = ref.read(ambientLightServiceProvider);
+    service.start();
+
+    _ambientLightSub = service.stream.listen((sample) {
+      if (!mounted) return;
+      setState(() {
+        _ambientLightLevel = sample.level;
+        _ambientLightLux = sample.lux;
+        _ambientLightAvailable = sample.sensorAvailable;
+      });
+    });
+  }
+
+  Future<void> _stopAmbientLightTracking() async {
+    await _ambientLightSub?.cancel();
+    _ambientLightSub = null;
+    await ref.read(ambientLightServiceProvider).stop();
+  }
+
+  String _ambientLevelLabel(AmbientLightLevel level) {
+    switch (level) {
+      case AmbientLightLevel.dark:
+        return 'Dark';
+      case AmbientLightLevel.dim:
+        return 'Dim';
+      case AmbientLightLevel.normal:
+        return 'Comfortable';
+      case AmbientLightLevel.bright:
+        return 'Bright';
+      case AmbientLightLevel.unknown:
+        return 'Unknown';
+    }
+  }
+
+  String _ambientThemeHint(AmbientLightLevel level) {
+    switch (level) {
+      case AmbientLightLevel.dark:
+        return 'Night journaling mode active';
+      case AmbientLightLevel.dim:
+        return 'Low-light journaling mode active';
+      case AmbientLightLevel.normal:
+        return 'Comfort mode active';
+      case AmbientLightLevel.bright:
+        return 'Bright-environment mode active';
+      case AmbientLightLevel.unknown:
+        return 'Waiting for ambient light...';
+    }
   }
 
   Future<void> _pickDate() async {
@@ -946,19 +1008,31 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
     final saving =
         ref.watch(journalViewModelProvider).status == JournalStatus.saving;
     final dateText = DateFormat('EEE, MMM d, yyyy').format(_date);
+    final palette = _JournalEnvironmentPalette.fromAmbientLevel(
+      _ambientLightLevel,
+    );
+    final ambientLevelText = _ambientLightAvailable
+        ? _ambientLevelLabel(_ambientLightLevel)
+        : 'Unavailable';
+    final ambientLuxText = _ambientLightLux == null
+        ? '-- lx'
+        : '${_ambientLightLux!.toStringAsFixed(0)} lx';
+    final ambientHintText = _ambientLightAvailable
+        ? _ambientThemeHint(_ambientLightLevel)
+        : 'Ambient light sensor is not available on this device';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F1EA),
+      backgroundColor: palette.scaffoldBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF4F1EA),
+        backgroundColor: palette.appBarBackground,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
+        iconTheme: IconThemeData(color: palette.primaryText),
         title: Text(
           isEdit ? 'Edit entry' : 'New entry',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'PlayfairDisplay Bold',
             fontSize: 18,
-            color: Color(0xFF1F2A22),
+            color: palette.primaryText,
           ),
         ),
         actions: [
@@ -970,11 +1044,11 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
                     width: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
+                : Text(
                     'Save',
                     style: TextStyle(
                       fontFamily: 'Inter Medium',
-                      color: Color(0xFF2D5A44),
+                      color: palette.accent,
                     ),
                   ),
           ),
@@ -985,46 +1059,93 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         children: [
           Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            decoration: BoxDecoration(
+              color: palette.cardBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: palette.outline, width: 1.2),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.light_mode_rounded, size: 18, color: palette.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ambient: $ambientLevelText • $ambientLuxText',
+                        style: TextStyle(
+                          fontFamily: 'Inter Bold',
+                          fontSize: 12,
+                          color: palette.primaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        ambientHintText,
+                        style: TextStyle(
+                          fontFamily: 'Inter Regular',
+                          fontSize: 11,
+                          color: palette.secondaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: palette.cardBackground,
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: palette.outline, width: 1.2),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Title',
                   style: TextStyle(
                     fontFamily: 'Inter Medium',
                     fontSize: 12,
-                    color: Color(0xFF7B8A7E),
+                    color: palette.secondaryText,
                   ),
                 ),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _titleController,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter Medium',
                     fontSize: 14,
-                    color: Color(0xFF1F2A22),
+                    color: palette.primaryText,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'e.g. Today I feel...',
-                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                    hintStyle: TextStyle(
+                      fontFamily: 'Inter Medium',
+                      fontSize: 13,
+                      color: palette.secondaryText,
+                    ),
+                    border: const OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                    ),
                     filled: true,
-                    fillColor: Color(0xFFEAF1ED),
+                    fillColor: palette.titleFieldBackground,
                   ),
                 ),
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Date',
                       style: TextStyle(
                         fontFamily: 'Inter Medium',
                         fontSize: 12,
-                        color: Color(0xFF7B8A7E),
+                        color: palette.secondaryText,
                       ),
                     ),
                     const Spacer(),
@@ -1037,10 +1158,10 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
                         ),
                         child: Text(
                           dateText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter Medium',
                             fontSize: 12,
-                            color: Color(0xFF2D5A44),
+                            color: palette.accent,
                           ),
                         ),
                       ),
@@ -1048,12 +1169,12 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Entry',
                   style: TextStyle(
                     fontFamily: 'Inter Medium',
                     fontSize: 12,
-                    color: Color(0xFF7B8A7E),
+                    color: palette.secondaryText,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1061,17 +1182,24 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
                   controller: _contentController,
                   minLines: 8,
                   maxLines: 14,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter Regular',
                     fontSize: 14,
                     height: 1.5,
-                    color: Color(0xFF1F2A22),
+                    color: palette.primaryText,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Write your thoughts here...',
-                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                    hintStyle: TextStyle(
+                      fontFamily: 'Inter Regular',
+                      fontSize: 13,
+                      color: palette.secondaryText,
+                    ),
+                    border: const OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                    ),
                     filled: true,
-                    fillColor: Color(0xFFF4F1EA),
+                    fillColor: palette.contentFieldBackground,
                   ),
                 ),
               ],
@@ -1083,8 +1211,8 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
             child: ElevatedButton(
               onPressed: saving ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2D5A44),
-                foregroundColor: Colors.white,
+                backgroundColor: palette.buttonBackground,
+                foregroundColor: palette.buttonForeground,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1099,5 +1227,95 @@ class _JournalEditorScreenState extends ConsumerState<_JournalEditorScreen> {
         ],
       ),
     );
+  }
+}
+
+class _JournalEnvironmentPalette {
+  final Color scaffoldBackground;
+  final Color appBarBackground;
+  final Color cardBackground;
+  final Color titleFieldBackground;
+  final Color contentFieldBackground;
+  final Color primaryText;
+  final Color secondaryText;
+  final Color accent;
+  final Color outline;
+  final Color buttonBackground;
+  final Color buttonForeground;
+
+  const _JournalEnvironmentPalette({
+    required this.scaffoldBackground,
+    required this.appBarBackground,
+    required this.cardBackground,
+    required this.titleFieldBackground,
+    required this.contentFieldBackground,
+    required this.primaryText,
+    required this.secondaryText,
+    required this.accent,
+    required this.outline,
+    required this.buttonBackground,
+    required this.buttonForeground,
+  });
+
+  factory _JournalEnvironmentPalette.fromAmbientLevel(AmbientLightLevel level) {
+    switch (level) {
+      case AmbientLightLevel.dark:
+        return const _JournalEnvironmentPalette(
+          scaffoldBackground: Color(0xFF1D2421),
+          appBarBackground: Color(0xFF1D2421),
+          cardBackground: Color(0xFF25302B),
+          titleFieldBackground: Color(0xFF314039),
+          contentFieldBackground: Color(0xFF2B3832),
+          primaryText: Color(0xFFE7F0E9),
+          secondaryText: Color(0xFF9AB0A4),
+          accent: Color(0xFF8AC8A6),
+          outline: Color(0xFF3A4D44),
+          buttonBackground: Color(0xFF3D7F60),
+          buttonForeground: Color(0xFFF2FAF4),
+        );
+      case AmbientLightLevel.dim:
+        return const _JournalEnvironmentPalette(
+          scaffoldBackground: Color(0xFFEEE8DC),
+          appBarBackground: Color(0xFFEEE8DC),
+          cardBackground: Colors.white,
+          titleFieldBackground: Color(0xFFF1ECE2),
+          contentFieldBackground: Color(0xFFF6F2EA),
+          primaryText: Color(0xFF1F2A22),
+          secondaryText: Color(0xFF6F7D73),
+          accent: Color(0xFF2D5A44),
+          outline: Color(0xFFE2DBCF),
+          buttonBackground: Color(0xFF2D5A44),
+          buttonForeground: Colors.white,
+        );
+      case AmbientLightLevel.bright:
+        return const _JournalEnvironmentPalette(
+          scaffoldBackground: Color(0xFFF8F6EF),
+          appBarBackground: Color(0xFFF8F6EF),
+          cardBackground: Colors.white,
+          titleFieldBackground: Color(0xFFE9F4EE),
+          contentFieldBackground: Color(0xFFF1F7F3),
+          primaryText: Color(0xFF1D2720),
+          secondaryText: Color(0xFF6C7D72),
+          accent: Color(0xFF2A5D45),
+          outline: Color(0xFFE4EEE8),
+          buttonBackground: Color(0xFF2A5D45),
+          buttonForeground: Colors.white,
+        );
+      case AmbientLightLevel.normal:
+      case AmbientLightLevel.unknown:
+        return const _JournalEnvironmentPalette(
+          scaffoldBackground: Color(0xFFF4F1EA),
+          appBarBackground: Color(0xFFF4F1EA),
+          cardBackground: Colors.white,
+          titleFieldBackground: Color(0xFFEAF1ED),
+          contentFieldBackground: Color(0xFFF4F1EA),
+          primaryText: Color(0xFF1F2A22),
+          secondaryText: Color(0xFF7B8A7E),
+          accent: Color(0xFF2D5A44),
+          outline: Color(0xFFEAF1ED),
+          buttonBackground: Color(0xFF2D5A44),
+          buttonForeground: Colors.white,
+        );
+    }
   }
 }
