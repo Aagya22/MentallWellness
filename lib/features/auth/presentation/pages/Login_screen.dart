@@ -219,11 +219,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 Center(
-                  child: Image.asset("assets/images/novacane.png", height: 90),
+                  child: Image.asset("assets/images/novacane.png", height: 145),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 10),
                 const Text(
                   "Welcome back",
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
@@ -233,7 +233,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   "sign in to access your account",
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 18),
 
                 /// EMAIL
                 TextFormField(

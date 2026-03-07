@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_dashboard_tab.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_notification_center_screen.dart';
@@ -110,15 +109,6 @@ class _AdminBottomNavigationScreenState
     final unreadCount = notificationsState.unreadCount;
 
     final adminName = session.getCurrentUserFullName() ?? 'Administrator';
-    final adminPic = session.getCurrentUserProfilePicture();
-    final initial = adminName.isNotEmpty
-        ? adminName.substring(0, 1).toUpperCase()
-        : 'A';
-
-    ImageProvider? avatarImage;
-    if (adminPic != null && adminPic.isNotEmpty) {
-      avatarImage = NetworkImage(ApiEndpoints.getImageUrl(adminPic));
-    }
 
     return PreferredSize(
       preferredSize: const Size.fromHeight(90),
@@ -142,34 +132,43 @@ class _AdminBottomNavigationScreenState
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                // Profile picture avatar
                 Container(
-                  width: 48,
-                  height: 48,
+                  height: 52,
+                  width: 52,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    gradient: avatarImage == null
-                        ? const LinearGradient(
-                            colors: [Color(0xFF818CF8), Color(0xFFA78BFA)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFD8E3DD),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  child: ClipOval(
-                    child: avatarImage != null
-                        ? Image(image: avatarImage, fit: BoxFit.cover)
-                        : Center(
-                            child: Text(
-                              initial,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Center(
+                      child: Transform.scale(
+                        scale: 1.3,
+                        child: Image.asset(
+                          'assets/images/novacane.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.spa_outlined,
+                            color: Color(0xFF4F46E5),
                           ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

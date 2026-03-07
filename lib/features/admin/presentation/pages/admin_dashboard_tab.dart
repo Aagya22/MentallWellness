@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_bottom_navigation_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/state/admin_dashboard_state.dart';
@@ -28,6 +29,11 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
     final session = ref.read(userSessionServiceProvider);
     final fullName = session.getCurrentUserFullName() ?? 'Admin';
     final email = session.getCurrentUserEmail() ?? '';
+    final profilePicturePath = session.getCurrentUserProfilePicture();
+    final profilePictureUrl =
+        (profilePicturePath != null && profilePicturePath.isNotEmpty)
+        ? ApiEndpoints.getImageUrl(profilePicturePath)
+        : null;
     final state = ref.watch(adminDashboardViewModelProvider);
 
     if (state.status == AdminDashboardStatus.error) {
@@ -46,7 +52,11 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
         children: [
           // ── Hero welcome card ──────────────────────────────────────────
-          _WelcomeCard(fullName: fullName, email: email),
+          _WelcomeCard(
+            fullName: fullName,
+            email: email,
+            profilePictureUrl: profilePictureUrl,
+          ),
           const SizedBox(height: 20),
 
           // ── Loading shimmer ────────────────────────────────────────────
@@ -179,11 +189,24 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
 class _WelcomeCard extends StatelessWidget {
   final String fullName;
   final String email;
+  final String? profilePictureUrl;
 
-  const _WelcomeCard({required this.fullName, required this.email});
+  const _WelcomeCard({
+    required this.fullName,
+    required this.email,
+    this.profilePictureUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final initial = fullName.isNotEmpty
+        ? fullName.substring(0, 1).toUpperCase()
+        : 'A';
+    final avatarImage =
+        profilePictureUrl != null && profilePictureUrl!.isNotEmpty
+        ? NetworkImage(profilePictureUrl!)
+        : null;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -215,15 +238,19 @@ class _WelcomeCard extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: Text(
-              fullName.isNotEmpty
-                  ? fullName.substring(0, 1).toUpperCase()
-                  : 'A',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+            child: ClipOval(
+              child: avatarImage != null
+                  ? Image(image: avatarImage, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 14),
@@ -271,11 +298,6 @@ class _WelcomeCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const Icon(
-            Icons.verified_user_rounded,
-            color: Colors.white54,
-            size: 36,
           ),
         ],
       ),

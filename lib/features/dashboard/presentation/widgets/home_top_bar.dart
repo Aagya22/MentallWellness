@@ -21,29 +21,38 @@ class HomeTopBar extends StatelessWidget {
         Row(
           children: [
             Container(
-              height: 30,
-              width: 30,
+              height: 52,
+              width: 52,
               decoration: BoxDecoration(
-                color: const Color(0xFF2D5A44),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFD8E3DD), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1F2A22).withValues(alpha: 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               clipBehavior: Clip.antiAlias,
-              child: Image.asset(
-                'assets/images/nova.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.spa_outlined, color: Colors.white);
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'NOVANA',
-              style: TextStyle(
-                fontFamily: 'Inter Bold',
-                fontSize: 16,
-                color: Color(0xFF1F2A22),
-                letterSpacing: 0.5,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                child: Center(
+                  child: Transform.scale(
+                    scale: 1.3,
+                    child: Image.asset(
+                      'assets/images/novacane.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.spa_outlined,
+                          color: Color(0xFF2D5A44),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

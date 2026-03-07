@@ -81,19 +81,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Center(
                   child: Image.asset(
                     "assets/images/novacane.png",
-                    height: 100,
+                    height: 145,
                   ),
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 10),
                 const Text(
                   "Get Started",
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 18),
 
                 /// FULL NAME
                 TextFormField(
