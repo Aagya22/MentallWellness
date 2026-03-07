@@ -28,9 +28,9 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
   Widget build(BuildContext context) {
     ref.listen(moodViewModelProvider, (previous, next) {
       if (next.status == MoodStatus.error && next.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
       }
     });
 
@@ -44,33 +44,78 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFFF4F1EA),
           elevation: 0,
+          scrolledUnderElevation: 0,
           iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
-          title: const Text(
-            'Mood',
-            style: TextStyle(
-              fontFamily: 'PlayfairDisplay Bold',
-              fontSize: 18,
-              color: Color(0xFF1F2A22),
-            ),
+          titleSpacing: 16,
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Mood',
+                style: TextStyle(
+                  fontFamily: 'Inter Bold',
+                  fontSize: 20,
+                  color: Color(0xFF1F2A22),
+                ),
+              ),
+              SizedBox(height: 1),
+              Text(
+                'Track your emotional patterns',
+                style: TextStyle(
+                  fontFamily: 'Inter Regular',
+                  fontSize: 11,
+                  color: Color(0xFF5D6A62),
+                ),
+              ),
+            ],
           ),
           actions: [
-            IconButton(
-              onPressed: () => notifier.refresh(),
-              icon: const Icon(Icons.refresh),
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFDCE7E1)),
+              ),
+              child: IconButton(
+                onPressed: () => notifier.refresh(),
+                icon: const Icon(Icons.refresh, color: Color(0xFF2D5A44)),
+                tooltip: 'Refresh',
+              ),
             ),
-            const SizedBox(width: 8),
           ],
-          bottom: const TabBar(
-            labelColor: Color(0xFF2D5A44),
-            unselectedLabelColor: Color(0xFF7B8A7E),
-            indicatorColor: Color(0xFF2D5A44),
-            labelStyle: TextStyle(fontFamily: 'Inter Bold', fontSize: 13),
-            unselectedLabelStyle: TextStyle(fontFamily: 'Inter Medium', fontSize: 13),
-            tabs: [
-              Tab(text: 'Log'),
-              Tab(text: 'Overview'),
-              Tab(text: 'History'),
-            ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(62),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6ECE7),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const TabBar(
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelColor: Color(0xFF1F2A22),
+                  unselectedLabelColor: Color(0xFF637066),
+                  labelStyle: TextStyle(fontFamily: 'Inter Bold', fontSize: 13),
+                  unselectedLabelStyle: TextStyle(
+                    fontFamily: 'Inter Medium',
+                    fontSize: 13,
+                  ),
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                  tabs: [
+                    Tab(text: 'Log'),
+                    Tab(text: 'Overview'),
+                    Tab(text: 'History'),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         body: SafeArea(
@@ -102,9 +147,13 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                       final messenger = ScaffoldMessenger.of(context);
                       final label = _selectedMoodLabel;
                       final score = _selectedMoodScore;
-                      if (label == null || label.trim().isEmpty || score == null) {
+                      if (label == null ||
+                          label.trim().isEmpty ||
+                          score == null) {
                         messenger.showSnackBar(
-                          const SnackBar(content: Text('Pick how you feel first.')),
+                          const SnackBar(
+                            content: Text('Pick how you feel first.'),
+                          ),
                         );
                         return;
                       }
@@ -126,10 +175,7 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                     overview: state.overview,
                     onRefresh: notifier.refresh,
                   ),
-                  MoodHistoryTab(
-                    state: state,
-                    onRefresh: notifier.refresh,
-                  ),
+                  MoodHistoryTab(state: state, onRefresh: notifier.refresh),
                 ],
               );
             },

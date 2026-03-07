@@ -26,7 +26,7 @@ class HomeSectionHeader extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
+            fontFamily: 'Inter Bold',
             fontSize: 18,
             color: Color(0xFF1F2A22),
           ),

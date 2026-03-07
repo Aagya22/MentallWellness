@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/common/mysnack_bar.dart';
 import 'package:mentalwellness/core/services/sensors/motion_sensor_service.dart';
+import 'package:mentalwellness/features/exercise/presentation/pages/guided/guided_session_ui.dart';
 import 'package:mentalwellness/features/exercise/presentation/pages/guided/guided_session_utils.dart';
 import 'package:mentalwellness/features/exercise/presentation/view_model/exercise_viewmodel.dart';
 
@@ -260,100 +261,68 @@ class _BoxBreathingSessionPageState
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F1EA),
-        appBar: AppBar(title: const Text('Box Breathing')),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF4F1EA),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
+          title: const Text(
+            'Box Breathing',
+            style: TextStyle(
+              fontFamily: 'Inter Bold',
+              fontSize: 18,
+              color: Color(0xFF1F2A22),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             children: [
-              LinearProgressIndicator(value: progress),
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      _status == _Status.complete
-                          ? 'Nicely done'
-                          : 'Cycle $cycle of $_cycles',
-                      style: const TextStyle(
-                        fontFamily: 'Inter Bold',
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _status == _Status.complete
-                          ? 'You completed 4 calm breathing cycles.'
-                          : _instruction(phase, holdSize),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Inter Medium',
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (_status != _Status.complete)
-                      Text(
-                        '$remainingInPhase s',
-                        style: const TextStyle(
-                          fontFamily: 'Inter Bold',
-                          fontSize: 32,
-                        ),
-                      )
-                    else
-                      Text(
-                        _isSaving
-                            ? 'Saving your session…'
-                            : _saveFailed
-                            ? 'Couldn\'t save this session.'
-                            : 'Session saved to history.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'Inter Medium',
-                          fontSize: 13,
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    Text(
-                      formatSeconds(_plannedSeconds - _elapsedSeconds),
-                      style: const TextStyle(
-                        fontFamily: 'Inter Regular',
-                        fontSize: 12,
-                        color: Color(0xFF5A6B60),
-                      ),
-                    ),
-                  ],
-                ),
+              GuidedProgressHeader(
+                progress: progress,
+                statusText: 'Box breathing session',
+                trailingText: _status == _Status.complete
+                    ? 'Completed'
+                    : 'Cycle $cycle/$_cycles',
               ),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
+              GuidedHeroCard(
+                icon: Icons.air_rounded,
+                title: _status == _Status.complete
+                    ? 'Nicely done'
+                    : _instruction(phase, holdSize),
+                subtitle: _status == _Status.complete
+                    ? 'You completed 4 calm breathing cycles.'
+                    : 'Follow the pace: inhale, hold, exhale, and hold again.',
+                highlightText: _status == _Status.complete
+                    ? 'Done'
+                    : '$remainingInPhase s',
+                footerText: _status == _Status.complete
+                    ? (_isSaving
+                          ? 'Saving your session...'
+                          : _saveFailed
+                          ? 'Could not save this session.'
+                          : 'Session saved to history.')
+                    : 'Remaining ${formatSeconds(_plannedSeconds - _elapsedSeconds)}',
+                gradientColors: const [Color(0xFF2D5A44), Color(0xFF4B7892)],
+              ),
+              const SizedBox(height: 12),
+              GuidedSectionCard(
+                title: 'Motion feedback',
+                icon: Icons.sensors_rounded,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.sensors_rounded,
-                          size: 18,
-                          color: Color(0xFF2D5A44),
-                        ),
-                        const SizedBox(width: 8),
                         const Text(
-                          'Motion Feedback',
+                          'Stillness quality',
                           style: TextStyle(
-                            fontFamily: 'Inter Bold',
-                            fontSize: 13,
-                            color: Color(0xFF1F2A22),
+                            fontFamily: 'Inter Medium',
+                            fontSize: 12,
+                            color: Color(0xFF5A6B60),
                           ),
                         ),
                         const Spacer(),
@@ -387,6 +356,7 @@ class _BoxBreathingSessionPageState
                           fontFamily: 'Inter Regular',
                           fontSize: 12,
                           color: Color(0xFF5A6B60),
+                          height: 1.35,
                         ),
                       )
                     else ...[
@@ -406,6 +376,7 @@ class _BoxBreathingSessionPageState
                           fontFamily: 'Inter Regular',
                           fontSize: 12,
                           color: Color(0xFF5A6B60),
+                          height: 1.35,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -432,37 +403,60 @@ class _BoxBreathingSessionPageState
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              if (_status == _Status.begin)
-                ElevatedButton(
-                  onPressed: _begin,
-                  child: const Text('Begin session'),
-                )
-              else if (_status == _Status.running)
-                ElevatedButton(onPressed: _pause, child: const Text('Pause'))
-              else if (_status == _Status.paused)
-                ElevatedButton(onPressed: _resume, child: const Text('Resume'))
-              else ...[
-                ElevatedButton(
-                  onPressed: () async {
-                    await _stopMotionTracking();
-                    if (!context.mounted) return;
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Close'),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFDCE7E1)),
                 ),
-                if (_saveFailed)
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _didSave = false;
-                        _saveFailed = false;
-                      });
-                      _saveIfNeeded();
-                    },
-                    child: const Text('Try saving again'),
-                  ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_status == _Status.begin)
+                      ElevatedButton.icon(
+                        onPressed: _begin,
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Begin session'),
+                      )
+                    else if (_status == _Status.running)
+                      ElevatedButton.icon(
+                        onPressed: _pause,
+                        icon: const Icon(Icons.pause_rounded),
+                        label: const Text('Pause'),
+                      )
+                    else if (_status == _Status.paused)
+                      ElevatedButton.icon(
+                        onPressed: _resume,
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Resume'),
+                      )
+                    else ...[
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await _stopMotionTracking();
+                          if (!context.mounted) return;
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(Icons.check_circle_outline_rounded),
+                        label: const Text('Close'),
+                      ),
+                      if (_saveFailed)
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _didSave = false;
+                              _saveFailed = false;
+                            });
+                            _saveIfNeeded();
+                          },
+                          child: const Text('Try saving again'),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),

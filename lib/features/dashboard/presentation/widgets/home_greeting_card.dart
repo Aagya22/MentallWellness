@@ -52,7 +52,7 @@ class HomeGreetingCard extends StatelessWidget {
                 Text(
                   userName,
                   style: const TextStyle(
-                    fontFamily: 'PlayfairDisplay Bold',
+                    fontFamily: 'Inter Bold',
                     fontSize: 30,
                     height: 1.1,
                     color: Colors.white,

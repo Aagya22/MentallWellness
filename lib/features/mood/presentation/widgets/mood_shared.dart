@@ -15,7 +15,11 @@ class MoodOption {
 
 const List<MoodOption> kMoodOptions = [
   MoodOption(label: 'Joyful', score: 9, emoji: Emojis.faceWithTearsOfJoy),
-  MoodOption(label: 'Happy', score: 8, emoji: Emojis.smilingFaceWithSmilingEyes),
+  MoodOption(
+    label: 'Happy',
+    score: 8,
+    emoji: Emojis.smilingFaceWithSmilingEyes,
+  ),
   MoodOption(label: 'Hopeful', score: 8, emoji: Emojis.slightlySmilingFace),
   MoodOption(label: 'Content', score: 7, emoji: Emojis.smilingFace),
   MoodOption(label: 'Calm', score: 7, emoji: Emojis.relievedFace),
@@ -42,11 +46,7 @@ String moodEmojiFor({required String? moodType, required int? score}) {
 }
 
 class MoodSectionTitle extends StatelessWidget {
-  const MoodSectionTitle({
-    super.key,
-    required this.icon,
-    required this.title,
-  });
+  const MoodSectionTitle({super.key, required this.icon, required this.title});
 
   final IconData icon;
   final String title;
@@ -60,7 +60,7 @@ class MoodSectionTitle extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
+            fontFamily: 'Inter Bold',
             fontSize: 18,
             color: Color(0xFF1F2A22),
           ),
@@ -87,13 +87,23 @@ class MoodMetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF1ED),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCE7E1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF2D5A44)),
+          Container(
+            height: 28,
+            width: 28,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF1ED),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, color: const Color(0xFF2D5A44), size: 16),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -104,7 +114,7 @@ class MoodMetricCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Inter Medium',
                     fontSize: 12,
-                    color: Color(0xFF7B8A7E),
+                    color: Color(0xFF5D6A62),
                   ),
                 ),
                 const SizedBox(height: 6),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mentalwellness/features/exercise/presentation/pages/guided/body_stretch_session_page.dart';
@@ -76,11 +76,12 @@ class _ExerciseScreenState extends ConsumerState<ExerciseScreen>
         backgroundColor: const Color(0xFFF4F1EA),
         elevation: 0,
         scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
         title: const Text(
           'Exercises',
           style: TextStyle(
             fontFamily: 'Inter Bold',
-            fontSize: 20,
+            fontSize: 18,
             color: Color(0xFF1F2A22),
           ),
         ),

@@ -18,6 +18,7 @@ import 'package:mentalwellness/features/journal/presentation/pages/journal_scree
 import 'package:mentalwellness/features/mood/presentation/pages/mood_screen.dart';
 import 'package:mentalwellness/features/mood/presentation/state/mood_state.dart';
 import 'package:mentalwellness/features/mood/presentation/view_model/mood_viewmodel.dart';
+import 'package:mentalwellness/features/reminder/presentation/pages/notification_center_screen.dart';
 import 'package:mentalwellness/features/reminder/presentation/pages/reminders_screen.dart';
 import 'package:mentalwellness/features/reminder/presentation/state/reminder_notifications_state.dart';
 import 'package:mentalwellness/features/reminder/presentation/state/reminder_state.dart';
@@ -69,6 +70,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final reminderNotificationsState = ref.watch(
       reminderNotificationsViewModelProvider,
     );
+    final unreadNotificationCount = reminderNotificationsState.notifications
+        .where((item) => !item.isRead)
+        .length;
     final scheduleState = ref.watch(scheduleViewModelProvider);
 
     final moodIsLoading =
@@ -96,9 +100,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               HomeTopBar(
                 initials: initials,
                 profilePictureUrl: profilePictureUrl,
+                unreadCount: unreadNotificationCount,
                 onTapNotifications: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RemindersScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationCenterScreen(),
+                    ),
                   );
                 },
               ),

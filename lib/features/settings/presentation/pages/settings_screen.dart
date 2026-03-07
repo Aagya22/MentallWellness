@@ -68,7 +68,7 @@ class SettingsScreen extends ConsumerWidget {
         title: const Text(
           'Settings',
           style: TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
+            fontFamily: 'Inter Bold',
             fontSize: 18,
             color: _text,
           ),

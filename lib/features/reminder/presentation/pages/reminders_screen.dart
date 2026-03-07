@@ -4,9 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:mentalwellness/common/mysnack_bar.dart';
 import 'package:mentalwellness/core/services/notifications/local_notification_service_provider.dart';
 import 'package:mentalwellness/features/reminder/domain/entities/reminder_entity.dart';
+import 'package:mentalwellness/features/reminder/domain/entities/reminder_notification_entity.dart';
 import 'package:mentalwellness/features/reminder/presentation/state/reminder_notifications_state.dart';
-import 'package:mentalwellness/features/reminder/presentation/view_model/reminder_notifications_viewmodel.dart';
 import 'package:mentalwellness/features/reminder/presentation/state/reminder_state.dart';
+import 'package:mentalwellness/features/reminder/presentation/view_model/reminder_notifications_viewmodel.dart';
 import 'package:mentalwellness/features/reminder/presentation/view_model/reminder_viewmodel.dart';
 
 class RemindersScreen extends ConsumerStatefulWidget {
@@ -22,17 +23,81 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     super.initState();
     Future.microtask(() async {
       await ref.read(localNotificationServiceProvider).init();
-      ref.read(reminderViewModelProvider.notifier).fetchReminders();
-      ref.read(reminderNotificationsViewModelProvider.notifier).fetchHistory();
+      await ref.read(reminderViewModelProvider.notifier).fetchReminders();
+      await ref
+          .read(reminderNotificationsViewModelProvider.notifier)
+          .fetchHistory();
     });
+  }
+
+  Future<void> _refreshCurrentTab(int tabIndex) async {
+    if (tabIndex == 0) {
+      await ref.read(reminderViewModelProvider.notifier).fetchReminders();
+      return;
+    }
+
+    await ref
+        .read(reminderNotificationsViewModelProvider.notifier)
+        .fetchHistory();
+  }
+
+  Future<void> _markAllNotificationsRead() async {
+    final ok = await ref
+        .read(reminderNotificationsViewModelProvider.notifier)
+        .markAllRead();
+    if (!mounted) return;
+
+    showMySnackBar(
+      context: context,
+      message: ok
+          ? 'All notifications marked as read'
+          : 'Failed to mark all read',
+      color: ok ? null : Colors.red,
+    );
+  }
+
+  Future<void> _clearNotifications() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Clear notification history?'),
+        content: const Text('This will remove all reminder notifications.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Clear all'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final ok = await ref
+        .read(reminderNotificationsViewModelProvider.notifier)
+        .clearAll();
+    if (!mounted) return;
+
+    showMySnackBar(
+      context: context,
+      message: ok ? 'Notification history cleared' : 'Failed to clear history',
+      color: ok ? null : Colors.red,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final reminderState = ref.watch(reminderViewModelProvider);
     final notificationState = ref.watch(reminderNotificationsViewModelProvider);
+
     final showSaving = reminderState.status == ReminderStatus.saving;
-    final showNotifSaving = notificationState.status == ReminderNotificationsStatus.saving;
+    final showNotifSaving =
+        notificationState.status == ReminderNotificationsStatus.saving;
+    final savingAny = showSaving || showNotifSaving;
 
     ref.listen(reminderViewModelProvider, (prev, next) {
       final prevMsg = prev?.errorMessage;
@@ -61,116 +126,104 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
             builder: (context, _) {
               final tabIndex = controller.index;
 
-              final savingAny = showSaving || showNotifSaving;
-
               return Scaffold(
                 backgroundColor: const Color(0xFFF4F1EA),
                 appBar: AppBar(
                   backgroundColor: const Color(0xFFF4F1EA),
                   elevation: 0,
                   scrolledUnderElevation: 0,
-                  title: const Text(
-                    'Reminders',
-                    style: TextStyle(
-                      fontFamily: 'Inter Bold',
-                      fontSize: 20,
-                      color: Color(0xFF1F2A22),
-                    ),
-                  ),
-                  bottom: const TabBar(
-                    labelColor: Color(0xFF1F2A22),
-                    indicatorColor: Color(0xFF2D5A44),
-                    tabs: [
-                      Tab(text: 'Reminders'),
-                      Tab(text: 'Notifications'),
+                  titleSpacing: 16,
+                  title: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reminders',
+                        style: TextStyle(
+                          fontFamily: 'Inter Bold',
+                          fontSize: 21,
+                          color: Color(0xFF1F2A22),
+                        ),
+                      ),
+                      SizedBox(height: 1),
+                      Text(
+                        'Stay consistent with your wellness habits',
+                        style: TextStyle(
+                          fontFamily: 'Inter Regular',
+                          fontSize: 11,
+                          color: Color(0xFF5D6A62),
+                        ),
+                      ),
                     ],
                   ),
                   actions: [
                     IconButton(
                       onPressed: savingAny
                           ? null
-                          : () {
-                              if (tabIndex == 0) {
-                                ref.read(reminderViewModelProvider.notifier).fetchReminders();
-                              } else {
-                                ref.read(reminderNotificationsViewModelProvider.notifier).fetchHistory();
-                              }
-                            },
-                      icon: const Icon(Icons.refresh_rounded, color: Color(0xFF2D5A44)),
+                          : () => _refreshCurrentTab(tabIndex),
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        color: Color(0xFF2D5A44),
+                      ),
                       tooltip: 'Refresh',
                     ),
                     if (tabIndex == 1)
                       IconButton(
-                        onPressed: savingAny
-                            ? null
-                            : () async {
-                                final ok = await ref
-                                    .read(reminderNotificationsViewModelProvider.notifier)
-                                    .markAllRead();
-                                if (ok && context.mounted) {
-                                  showMySnackBar(
-                                    context: context,
-                                    message: 'All notifications marked as read',
-                                  );
-                                } else if (context.mounted) {
-                                  showMySnackBar(
-                                    context: context,
-                                    message: 'Failed to mark all read',
-                                    color: Colors.red,
-                                  );
-                                }
-                              },
-                        icon: const Icon(Icons.done_all_rounded, color: Color(0xFF2D5A44)),
+                        onPressed: savingAny ? null : _markAllNotificationsRead,
+                        icon: const Icon(
+                          Icons.done_all_rounded,
+                          color: Color(0xFF2D5A44),
+                        ),
                         tooltip: 'Mark all read',
                       ),
                     if (tabIndex == 1)
                       IconButton(
-                        onPressed: savingAny
-                            ? null
-                            : () async {
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: const Text('Clear notification history?'),
-                                    content:
-                                        const Text('This will remove all reminder notifications.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        child: const Text('Clear'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirm != true || !context.mounted) return;
-                                final ok = await ref
-                                    .read(reminderNotificationsViewModelProvider.notifier)
-                                    .clearAll();
-                                if (ok && context.mounted) {
-                                  showMySnackBar(
-                                    context: context,
-                                    message: 'Notification history cleared',
-                                  );
-                                } else if (context.mounted) {
-                                  showMySnackBar(
-                                    context: context,
-                                    message: 'Failed to clear notification history',
-                                    color: Colors.red,
-                                  );
-                                }
-                              },
-                        icon: const Icon(Icons.delete_sweep_outlined, color: Color(0xFF2D5A44)),
+                        onPressed: savingAny ? null : _clearNotifications,
+                        icon: const Icon(
+                          Icons.delete_sweep_outlined,
+                          color: Color(0xFF8B2E2E),
+                        ),
                         tooltip: 'Clear history',
                       ),
                     const SizedBox(width: 4),
                   ],
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(62),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6ECE7),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const TabBar(
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          dividerColor: Colors.transparent,
+                          labelColor: Color(0xFF1F2A22),
+                          unselectedLabelColor: Color(0xFF637066),
+                          labelStyle: TextStyle(
+                            fontFamily: 'Inter Bold',
+                            fontSize: 13,
+                          ),
+                          unselectedLabelStyle: TextStyle(
+                            fontFamily: 'Inter Medium',
+                            fontSize: 13,
+                          ),
+                          indicator: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          tabs: [
+                            Tab(text: 'Reminders'),
+                            Tab(text: 'Notifications'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
                 floatingActionButton: tabIndex == 0
-                    ? FloatingActionButton(
+                    ? FloatingActionButton.extended(
                         onPressed: showSaving
                             ? null
                             : () async {
@@ -183,8 +236,11 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                               },
                         backgroundColor: const Color(0xFF2D5A44),
                         foregroundColor: Colors.white,
-                        shape: const CircleBorder(),
-                        child: const Icon(Icons.add),
+                        icon: const Icon(Icons.add),
+                        label: const Text(
+                          'New reminder',
+                          style: TextStyle(fontFamily: 'Inter Medium'),
+                        ),
                       )
                     : null,
                 body: Column(
@@ -214,123 +270,6 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   }
 }
 
-class _NotificationsBody extends ConsumerWidget {
-  const _NotificationsBody({required this.state});
-
-  final ReminderNotificationsState state;
-
-  String _typeLabel(String type) {
-    final t = type.trim().isEmpty ? 'journal' : type.trim();
-    return t[0].toUpperCase() + t.substring(1);
-  }
-
-  String _whenLabel(DateTime dt) {
-    return DateFormat('EEE, MMM d • h:mm a').format(dt);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (state.status == ReminderNotificationsStatus.loading && state.notifications.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF2D5A44)),
-      );
-    }
-
-    if (state.notifications.isEmpty) {
-      return const Center(
-        child: Text(
-          'No notifications yet',
-          style: TextStyle(
-            fontFamily: 'Inter Medium',
-            color: Color(0xFF1F2A22),
-          ),
-        ),
-      );
-    }
-
-    final saving = state.status == ReminderNotificationsStatus.saving;
-
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      itemCount: state.notifications.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final n = state.notifications[index];
-        return InkWell(
-          onTap: saving
-              ? null
-              : () {
-                  if (!n.isRead) {
-                    ref.read(reminderNotificationsViewModelProvider.notifier).markRead(id: n.id);
-                  }
-                },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x14000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          if (!n.isRead)
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF2D5A44),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          if (!n.isRead) const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              n.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: n.isRead ? 'Inter Medium' : 'Inter Bold',
-                                fontSize: 14,
-                                color: const Color(0xFF1F2A22),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${_whenLabel(n.scheduledFor)} • ${_typeLabel(n.type)}',
-                        style: const TextStyle(
-                          fontFamily: 'Inter Regular',
-                          fontSize: 12,
-                          color: Color(0xFF5D6A62),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class _RemindersBody extends ConsumerWidget {
   const _RemindersBody({required this.state});
 
@@ -344,83 +283,279 @@ class _RemindersBody extends ConsumerWidget {
       );
     }
 
-    if (state.reminders.isEmpty) {
-      return const Center(
-        child: Text(
-          'No reminders yet',
-          style: TextStyle(
-            fontFamily: 'Inter Medium',
-            color: Color(0xFF1F2A22),
+    final saving = state.status == ReminderStatus.saving;
+    final reminders = state.reminders;
+    final enabledCount = reminders.where((r) => r.enabled).length;
+
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            child: _DualMetricCard(
+              leftLabel: 'Active',
+              leftValue: enabledCount.toString(),
+              rightLabel: 'Total',
+              rightValue: reminders.length.toString(),
+            ),
           ),
         ),
+        if (reminders.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyStateCard(
+              icon: Icons.alarm_off_rounded,
+              title: 'No reminders yet',
+              subtitle:
+                  'Tap "New reminder" to schedule your first wellness check-in.',
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 24),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final reminder = reminders[index];
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == reminders.length - 1 ? 0 : 10,
+                  ),
+                  child: _ReminderCard(
+                    reminder: reminder,
+                    disabled: saving,
+                    onTap: () async {
+                      await showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => _UpsertReminderSheet(initial: reminder),
+                      );
+                    },
+                    onToggleEnabled: saving
+                        ? null
+                        : (value) async {
+                            final ok = await ref
+                                .read(reminderViewModelProvider.notifier)
+                                .updateReminder(
+                                  id: reminder.id,
+                                  enabled: value,
+                                );
+                            if (!ok && context.mounted) {
+                              showMySnackBar(
+                                context: context,
+                                message: 'Failed to update reminder',
+                                color: Colors.red,
+                              );
+                            }
+                          },
+                    onDelete: saving
+                        ? null
+                        : () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Delete reminder?'),
+                                content: Text(
+                                  '"${reminder.title}" will be removed.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm != true || !context.mounted) return;
+
+                            final ok = await ref
+                                .read(reminderViewModelProvider.notifier)
+                                .deleteReminder(id: reminder.id);
+                            if (ok && context.mounted) {
+                              showMySnackBar(
+                                context: context,
+                                message: 'Reminder deleted',
+                              );
+                            }
+                          },
+                  ),
+                );
+              }, childCount: reminders.length),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _NotificationsBody extends ConsumerWidget {
+  const _NotificationsBody({required this.state});
+
+  final ReminderNotificationsState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (state.status == ReminderNotificationsStatus.loading &&
+        state.notifications.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF2D5A44)),
       );
     }
 
-    final saving = state.status == ReminderStatus.saving;
+    final notifications = state.notifications;
+    final unreadCount = notifications.where((n) => !n.isRead).length;
+    final saving = state.status == ReminderNotificationsStatus.saving;
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      itemCount: state.reminders.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final r = state.reminders[index];
-        return _ReminderCard(
-          reminder: r,
-          disabled: saving,
-          onTap: () async {
-            await showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => _UpsertReminderSheet(initial: r),
-            );
-          },
-          onToggleEnabled: saving
-              ? null
-              : (value) async {
-                  final ok = await ref
-                      .read(reminderViewModelProvider.notifier)
-                      .updateReminder(id: r.id, enabled: value);
-                  if (!ok && context.mounted) {
-                    showMySnackBar(
-                      context: context,
-                      message: 'Failed to update reminder',
-                      color: Colors.red,
-                    );
-                  }
-                },
-          onDelete: saving
-              ? null
-              : () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Delete reminder?'),
-                      content: Text('"${r.title}" will be removed.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Delete'),
-                        ),
-                      ],
-                    ),
-                  );
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            child: _DualMetricCard(
+              leftLabel: 'Unread',
+              leftValue: unreadCount.toString(),
+              rightLabel: 'Total',
+              rightValue: notifications.length.toString(),
+            ),
+          ),
+        ),
+        if (notifications.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyStateCard(
+              icon: Icons.notifications_none_rounded,
+              title: 'No notifications yet',
+              subtitle: 'Delivered reminder alerts will appear here.',
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 24),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final item = notifications[index];
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == notifications.length - 1 ? 0 : 10,
+                  ),
+                  child: _NotificationCard(
+                    notification: item,
+                    disabled: saving,
+                    onTap: () {
+                      if (!item.isRead) {
+                        ref
+                            .read(
+                              reminderNotificationsViewModelProvider.notifier,
+                            )
+                            .markRead(id: item.id);
+                      }
+                    },
+                    onMarkRead: item.isRead
+                        ? null
+                        : () {
+                            ref
+                                .read(
+                                  reminderNotificationsViewModelProvider
+                                      .notifier,
+                                )
+                                .markRead(id: item.id);
+                          },
+                  ),
+                );
+              }, childCount: notifications.length),
+            ),
+          ),
+      ],
+    );
+  }
+}
 
-                  if (confirm != true || !context.mounted) return;
+class _DualMetricCard extends StatelessWidget {
+  const _DualMetricCard({
+    required this.leftLabel,
+    required this.leftValue,
+    required this.rightLabel,
+    required this.rightValue,
+  });
 
-                  final ok = await ref
-                      .read(reminderViewModelProvider.notifier)
-                      .deleteReminder(id: r.id);
-                  if (ok && context.mounted) {
-                    showMySnackBar(context: context, message: 'Reminder deleted');
-                  }
-                },
-        );
-      },
+  final String leftLabel;
+  final String leftValue;
+  final String rightLabel;
+  final String rightValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2D5A44), Color(0xFF4E7A64)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x291F2A22),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _MetricItem(label: leftLabel, value: leftValue),
+          ),
+          Container(width: 1, height: 30, color: const Color(0x66FFFFFF)),
+          Expanded(
+            child: _MetricItem(label: rightLabel, value: rightValue),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricItem extends StatelessWidget {
+  const _MetricItem({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontFamily: 'Inter Bold',
+            fontSize: 22,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Inter Medium',
+            fontSize: 12,
+            color: Color(0xFFE9F1EC),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -450,86 +585,391 @@ class _ReminderCard extends StatelessWidget {
     return MaterialLocalizations.of(context).formatTimeOfDay(tod);
   }
 
-  String _daysLabel(List<int> days) {
-    const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    final unique = {...days.where((d) => d >= 0 && d <= 6)}.toList()..sort();
-    if (unique.length == 7) return 'Everyday';
-    if (unique.isEmpty) return 'No days';
-    return unique.map((d) => names[d]).join(', ');
+  String _typeLabel(String type) {
+    final t = type.trim().isEmpty ? 'journal' : type.trim();
+    return t[0].toUpperCase() + t.substring(1);
   }
+
+  IconData _typeIcon(String type) {
+    switch (type.trim().toLowerCase()) {
+      case 'mood':
+        return Icons.sentiment_satisfied_alt_rounded;
+      case 'exercise':
+        return Icons.fitness_center_rounded;
+      case 'journal':
+      default:
+        return Icons.menu_book_rounded;
+    }
+  }
+
+  List<int> _normalizedDays(List<int> days) {
+    final unique = {...days.where((d) => d >= 0 && d <= 6)}.toList()..sort();
+    return unique;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final days = _normalizedDays(reminder.daysOfWeek);
+    final isEveryday = days.length == 7;
+    final enabled = reminder.enabled;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+        decoration: BoxDecoration(
+          color: enabled ? Colors.white : const Color(0xFFF7F8F7),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: enabled ? const Color(0xFFD8E5DD) : const Color(0xFFE1E8E3),
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF1ED),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _typeIcon(reminder.type),
+                    color: const Color(0xFF2D5A44),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reminder.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Inter Bold',
+                          fontSize: 15,
+                          color: Color(0xFF1F2A22),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${_formatTime(context, reminder.time)} • ${_typeLabel(reminder.type)}',
+                        style: const TextStyle(
+                          fontFamily: 'Inter Medium',
+                          fontSize: 12,
+                          color: Color(0xFF5D6A62),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: enabled,
+                  onChanged: disabled ? null : onToggleEnabled,
+                  activeColor: const Color(0xFF2D5A44),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: enabled
+                        ? const Color(0xFF2D5A44)
+                        : const Color(0xFFD8E3DC),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    enabled ? 'Enabled' : 'Paused',
+                    style: TextStyle(
+                      fontFamily: 'Inter Medium',
+                      fontSize: 11,
+                      color: enabled ? Colors.white : const Color(0xFF2D5A44),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: disabled ? null : onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('Delete'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF8B2E2E),
+                    textStyle: const TextStyle(
+                      fontFamily: 'Inter Medium',
+                      fontSize: 12,
+                    ),
+                    minimumSize: const Size(0, 28),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: isEveryday
+                    ? const [_DayPill(label: 'Everyday')]
+                    : days
+                          .map((day) => _DayPill(label: dayLabels[day]))
+                          .toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationCard extends StatelessWidget {
+  const _NotificationCard({
+    required this.notification,
+    required this.onTap,
+    required this.onMarkRead,
+    required this.disabled,
+  });
+
+  final ReminderNotificationEntity notification;
+  final VoidCallback onTap;
+  final VoidCallback? onMarkRead;
+  final bool disabled;
 
   String _typeLabel(String type) {
     final t = type.trim().isEmpty ? 'journal' : type.trim();
     return t[0].toUpperCase() + t.substring(1);
   }
 
+  IconData _typeIcon(String type) {
+    switch (type.trim().toLowerCase()) {
+      case 'mood':
+        return Icons.sentiment_satisfied_alt_rounded;
+      case 'exercise':
+        return Icons.fitness_center_rounded;
+      case 'journal':
+      default:
+        return Icons.menu_book_rounded;
+    }
+  }
+
+  String _whenLabel(DateTime dt) {
+    return DateFormat('EEE, MMM d • h:mm a').format(dt);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final unread = !notification.isRead;
+
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      onTap: disabled ? null : onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: unread ? Colors.white : const Color(0xFFF8FAF8),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: unread ? const Color(0xFFBFD3C7) : const Color(0xFFE1E8E3),
+          ),
           boxShadow: const [
             BoxShadow(
               color: Color(0x14000000),
-              blurRadius: 8,
-              offset: Offset(0, 3),
+              blurRadius: 10,
+              offset: Offset(0, 4),
             ),
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: unread
+                    ? const Color(0xFFEAF1ED)
+                    : const Color(0xFFEDEFEF),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                _typeIcon(notification.type),
+                color: const Color(0xFF2D5A44),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    reminder.title,
-                    maxLines: 1,
+                    notification.title,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Inter Bold',
+                    style: TextStyle(
+                      fontFamily: unread ? 'Inter Bold' : 'Inter Medium',
                       fontSize: 14,
-                      color: Color(0xFF1F2A22),
+                      color: const Color(0xFF1F2A22),
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${_formatTime(context, reminder.time)} • ${_typeLabel(reminder.type)}',
-                    style: const TextStyle(
-                      fontFamily: 'Inter Medium',
-                      fontSize: 12,
-                      color: Color(0xFF5D6A62),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _daysLabel(reminder.daysOfWeek),
+                    '${_typeLabel(notification.type)} • ${_whenLabel(notification.deliveredAt)}',
                     style: const TextStyle(
                       fontFamily: 'Inter Regular',
                       fontSize: 12,
                       color: Color(0xFF5D6A62),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: unread
+                              ? const Color(0xFF2D5A44)
+                              : const Color(0xFFD8E3DC),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          unread ? 'Unread' : 'Read',
+                          style: TextStyle(
+                            fontFamily: 'Inter Medium',
+                            fontSize: 11,
+                            color: unread
+                                ? Colors.white
+                                : const Color(0xFF2D5A44),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (unread)
+                        TextButton.icon(
+                          onPressed: disabled ? null : onMarkRead,
+                          icon: const Icon(Icons.check, size: 16),
+                          label: const Text('Mark read'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF2D5A44),
+                            textStyle: const TextStyle(
+                              fontFamily: 'Inter Medium',
+                              fontSize: 12,
+                            ),
+                            minimumSize: const Size(0, 28),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            Switch(
-              value: reminder.enabled,
-              onChanged: disabled ? null : onToggleEnabled,
-              activeThumbColor: const Color(0xFF2D5A44),
-            ),
-            IconButton(
-              onPressed: disabled ? null : onDelete,
-              icon: const Icon(Icons.delete_outline, color: Color(0xFF8B2E2E)),
-              tooltip: 'Delete',
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DayPill extends StatelessWidget {
+  const _DayPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF1ED),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Inter Medium',
+          fontSize: 11,
+          color: Color(0xFF2D5A44),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyStateCard extends StatelessWidget {
+  const _EmptyStateCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE6EEE9),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Icon(icon, size: 34, color: const Color(0xFF2D5A44)),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Inter Bold',
+              fontSize: 16,
+              color: Color(0xFF1F2A22),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Inter Regular',
+              fontSize: 13,
+              color: Color(0xFF5D6A62),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -541,7 +981,8 @@ class _UpsertReminderSheet extends ConsumerStatefulWidget {
   final ReminderEntity? initial;
 
   @override
-  ConsumerState<_UpsertReminderSheet> createState() => _UpsertReminderSheetState();
+  ConsumerState<_UpsertReminderSheet> createState() =>
+      _UpsertReminderSheetState();
 }
 
 class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
@@ -557,8 +998,12 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
     final initial = widget.initial;
     _titleController = TextEditingController(text: initial?.title ?? '');
     _time = _parseTime(initial?.time) ?? TimeOfDay.now();
-    _type = (initial?.type ?? 'journal').trim().isEmpty ? 'journal' : (initial?.type ?? 'journal');
-    _days = {...(initial?.daysOfWeek ?? const [0, 1, 2, 3, 4, 5, 6])};
+    _type = (initial?.type ?? 'journal').trim().isEmpty
+        ? 'journal'
+        : (initial?.type ?? 'journal');
+    _days = {
+      ...(initial?.daysOfWeek ?? const [0, 1, 2, 3, 4, 5, 6]),
+    };
     _enabled = initial?.enabled ?? true;
   }
 
@@ -585,10 +1030,7 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _time,
-    );
+    final picked = await showTimePicker(context: context, initialTime: _time);
     if (picked == null) return;
     setState(() => _time = picked);
   }
@@ -596,7 +1038,11 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
   Future<void> _save() async {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      showMySnackBar(context: context, message: 'Title is required', color: Colors.red);
+      showMySnackBar(
+        context: context,
+        message: 'Title is required',
+        color: Colors.red,
+      );
       return;
     }
 
@@ -636,14 +1082,15 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final isEdit = widget.initial != null;
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 14, 16, 16 + bottomInset),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, 16 + bottomInset),
       decoration: const BoxDecoration(
         color: Color(0xFFF4F1EA),
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
       ),
       child: SafeArea(
@@ -652,13 +1099,24 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBCC7BE),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
               Row(
                 children: [
                   Text(
-                    isEdit ? 'Edit reminder' : 'New reminder',
+                    isEdit ? 'Edit reminder' : 'Create reminder',
                     style: const TextStyle(
                       fontFamily: 'Inter Bold',
-                      fontSize: 16,
+                      fontSize: 18,
                       color: Color(0xFF1F2A22),
                     ),
                   ),
@@ -669,71 +1127,148 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
+              const Text(
+                'Set up a recurring prompt for journaling, mood, or exercise.',
+                style: TextStyle(
+                  fontFamily: 'Inter Regular',
+                  fontSize: 12,
+                  color: Color(0xFF5D6A62),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const _SheetLabel(text: 'Title'),
+              const SizedBox(height: 6),
               TextField(
                 controller: _titleController,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Evening reflection',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD8E5DD)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD8E5DD)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF2D5A44),
+                      width: 1.2,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickTime,
-                      icon: const Icon(Icons.access_time),
-                      label: Text(
-                        MaterialLocalizations.of(context).formatTimeOfDay(_time),
-                        style: const TextStyle(fontFamily: 'Inter Medium'),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _SheetLabel(text: 'Time'),
+                        const SizedBox(height: 6),
+                        OutlinedButton.icon(
+                          onPressed: _pickTime,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFD8E5DD)),
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF1F2A22),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.access_time),
+                          label: Text(
+                            MaterialLocalizations.of(
+                              context,
+                            ).formatTimeOfDay(_time),
+                            style: const TextStyle(fontFamily: 'Inter Medium'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      key: ValueKey(_type),
-                      initialValue: _type,
-                      decoration: const InputDecoration(
-                        labelText: 'Type',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'journal', child: Text('Journal')),
-                        DropdownMenuItem(value: 'mood', child: Text('Mood')),
-                        DropdownMenuItem(value: 'exercise', child: Text('Exercise')),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _SheetLabel(text: 'Type'),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<String>(
+                          key: ValueKey(_type),
+                          initialValue: _type,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD8E5DD),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD8E5DD),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2D5A44),
+                                width: 1.2,
+                              ),
+                            ),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'journal',
+                              child: Text('Journal'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'mood',
+                              child: Text('Mood'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'exercise',
+                              child: Text('Exercise'),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() => _type = v);
+                          },
+                        ),
                       ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() => _type = v);
-                      },
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Days',
-                style: TextStyle(
-                  fontFamily: 'Inter Bold',
-                  fontSize: 13,
-                  color: Color(0xFF1F2A22),
-                ),
-              ),
+              const _SheetLabel(text: 'Repeat on'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: List.generate(7, (index) {
-                  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
                   final selected = _days.contains(index);
                   return FilterChip(
-                    label: Text(labels[index]),
+                    label: Text(dayLabels[index]),
                     selected: selected,
                     selectedColor: const Color(0xFFEAF1ED),
                     checkmarkColor: const Color(0xFF2D5A44),
+                    labelStyle: TextStyle(
+                      fontFamily: selected ? 'Inter Bold' : 'Inter Medium',
+                      color: const Color(0xFF1F2A22),
+                    ),
+                    side: const BorderSide(color: Color(0xFFD8E5DD)),
                     onSelected: (v) {
                       setState(() {
                         if (v) {
@@ -746,33 +1281,88 @@ class _UpsertReminderSheetState extends ConsumerState<_UpsertReminderSheet> {
                   );
                 }),
               ),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _enabled,
-                onChanged: (v) => setState(() => _enabled = v),
-                title: const Text(
-                  'Enabled',
-                  style: TextStyle(fontFamily: 'Inter Medium', color: Color(0xFF1F2A22)),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
                 ),
-                activeThumbColor: const Color(0xFF2D5A44),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD8E5DD)),
+                ),
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _enabled,
+                  onChanged: (v) => setState(() => _enabled = v),
+                  title: const Text(
+                    'Reminder is enabled',
+                    style: TextStyle(
+                      fontFamily: 'Inter Medium',
+                      fontSize: 14,
+                      color: Color(0xFF1F2A22),
+                    ),
+                  ),
+                  activeColor: const Color(0xFF2D5A44),
+                ),
               ),
               const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2D5A44),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFD8E5DD)),
+                        foregroundColor: const Color(0xFF1F2A22),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
                   ),
-                  child: Text(isEdit ? 'Save' : 'Create'),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2D5A44),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: Icon(isEdit ? Icons.check : Icons.add),
+                      label: Text(isEdit ? 'Save' : 'Create'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SheetLabel extends StatelessWidget {
+  const _SheetLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontFamily: 'Inter Bold',
+        fontSize: 12,
+        color: Color(0xFF1F2A22),
       ),
     );
   }

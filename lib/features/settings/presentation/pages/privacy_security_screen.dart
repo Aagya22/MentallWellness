@@ -308,7 +308,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
         title: const Text(
           'Privacy & Security',
           style: TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
+            fontFamily: 'Inter Bold',
             fontSize: 18,
             color: _text,
           ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/common/mysnack_bar.dart';
+import 'package:mentalwellness/features/exercise/presentation/pages/guided/guided_session_ui.dart';
 import 'package:mentalwellness/features/exercise/presentation/pages/guided/guided_session_utils.dart';
 import 'package:mentalwellness/features/exercise/presentation/view_model/exercise_viewmodel.dart';
 
@@ -17,20 +18,37 @@ class _Prompt {
 }
 
 const _prompts = <_Prompt>[
-  _Prompt(id: 'p1', text: "Name something you're grateful for today", seconds: 40),
-  _Prompt(id: 'p2', text: 'Name someone who made a difference recently', seconds: 40),
-  _Prompt(id: 'p3', text: 'Name something about yourself you appreciate', seconds: 40),
+  _Prompt(
+    id: 'p1',
+    text: "Name something you're grateful for today",
+    seconds: 40,
+  ),
+  _Prompt(
+    id: 'p2',
+    text: 'Name someone who made a difference recently',
+    seconds: 40,
+  ),
+  _Prompt(
+    id: 'p3',
+    text: 'Name something about yourself you appreciate',
+    seconds: 40,
+  ),
 ];
 
 class GratitudePauseSessionPage extends ConsumerStatefulWidget {
   const GratitudePauseSessionPage({super.key});
 
   @override
-  ConsumerState<GratitudePauseSessionPage> createState() => _GratitudePauseSessionPageState();
+  ConsumerState<GratitudePauseSessionPage> createState() =>
+      _GratitudePauseSessionPageState();
 }
 
-class _GratitudePauseSessionPageState extends ConsumerState<GratitudePauseSessionPage> {
-  static final int _plannedSeconds = _prompts.fold<int>(0, (sum, p) => sum + p.seconds); // 120
+class _GratitudePauseSessionPageState
+    extends ConsumerState<GratitudePauseSessionPage> {
+  static final int _plannedSeconds = _prompts.fold<int>(
+    0,
+    (sum, p) => sum + p.seconds,
+  ); // 120
 
   _Status _status = _Status.begin;
   int _index = 0;
@@ -63,7 +81,9 @@ class _GratitudePauseSessionPageState extends ConsumerState<GratitudePauseSessio
   }
 
   int get _elapsedSeconds {
-    final completed = _prompts.take(_index).fold<int>(0, (sum, p) => sum + p.seconds);
+    final completed = _prompts
+        .take(_index)
+        .fold<int>(0, (sum, p) => sum + p.seconds);
     final spent = _prompts[_index].seconds - _remaining;
     return (completed + spent).clamp(0, _plannedSeconds);
   }
@@ -118,7 +138,9 @@ class _GratitudePauseSessionPageState extends ConsumerState<GratitudePauseSessio
       _saveFailed = false;
     });
 
-    final ok = await ref.read(exerciseViewModelProvider.notifier).completeGuidedExercise(
+    final ok = await ref
+        .read(exerciseViewModelProvider.notifier)
+        .completeGuidedExercise(
           title: 'Gratitude Pause',
           category: 'Reflection',
           plannedDurationSeconds: _plannedSeconds,
@@ -152,8 +174,14 @@ class _GratitudePauseSessionPageState extends ConsumerState<GratitudePauseSessio
           title: const Text('Exit session?'),
           content: const Text('It won\'t be saved unless completed.'),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Exit')),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Exit'),
+            ),
           ],
         );
       },
@@ -179,104 +207,159 @@ class _GratitudePauseSessionPageState extends ConsumerState<GratitudePauseSessio
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F1EA),
-        appBar: AppBar(title: const Text('Gratitude Pause')),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF4F1EA),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
+          title: const Text(
+            'Gratitude Pause',
+            style: TextStyle(
+              fontFamily: 'Inter Bold',
+              fontSize: 18,
+              color: Color(0xFF1F2A22),
+            ),
+          ),
+        ),
+        body: SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
             children: [
-              LinearProgressIndicator(value: _progress),
-              const SizedBox(height: 18),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
+              GuidedProgressHeader(
+                progress: _progress,
+                statusText: 'Gratitude reflection',
+                trailingText: _status == _Status.complete
+                    ? 'Completed'
+                    : 'Prompt ${_index + 1}/${_prompts.length}',
+              ),
+              const SizedBox(height: 12),
+              GuidedHeroCard(
+                icon: Icons.favorite_border_rounded,
+                title: _status == _Status.complete
+                    ? 'You took a moment for yourself'
+                    : prompt.text,
+                subtitle: _status == _Status.complete
+                    ? 'That matters. Carry this calm feeling into the rest of your day.'
+                    : 'Take your time. There is no right answer here.',
+                highlightText: _status == _Status.complete
+                    ? 'Done'
+                    : '${_remaining}s',
+                footerText: _status == _Status.complete
+                    ? (_isSaving
+                          ? 'Saving your session...'
+                          : _saveFailed
+                          ? 'Could not save this session.'
+                          : 'Session saved to history.')
+                    : 'Remaining ${formatSeconds(_plannedSeconds - _elapsedSeconds)}',
+                gradientColors: const [Color(0xFF6A4C7A), Color(0xFF8A6A9A)],
+              ),
+              const SizedBox(height: 12),
+              GuidedSectionCard(
+                title: _status == _Status.complete
+                    ? 'Session summary'
+                    : 'Reflection cue',
+                icon: _status == _Status.complete
+                    ? Icons.fact_check_outlined
+                    : Icons.lightbulb_outline,
                 child: _status == _Status.complete
-                    ? Column(
-                        children: [
-                          const Text(
-                            'You took a moment for yourself.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: 'Inter Bold', fontSize: 16),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'That matters.',
-                            style: TextStyle(fontFamily: 'Inter Medium', fontSize: 14),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            _isSaving
-                                ? 'Saving your session…'
-                                : _saveFailed
-                                    ? 'Couldn\'t save this session.'
-                                    : 'Session saved to history.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontFamily: 'Inter Medium', fontSize: 13),
-                          ),
-                        ],
+                    ? const Text(
+                        'You finished all gratitude prompts. Repeating this practice can improve mood and focus over time.',
+                        style: TextStyle(
+                          fontFamily: 'Inter Regular',
+                          fontSize: 13,
+                          color: Color(0xFF5A6B60),
+                          height: 1.4,
+                        ),
                       )
                     : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            prompt.text,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontFamily: 'Inter Bold', fontSize: 18),
-                          ),
-                          const SizedBox(height: 12),
                           const Text(
-                            'Take your time. There’s no right answer.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontFamily: 'Inter Regular', fontSize: 13, color: Color(0xFF5A6B60)),
+                            'Name one detail for the prompt before moving on.',
+                            style: TextStyle(
+                              fontFamily: 'Inter Regular',
+                              fontSize: 13,
+                              color: Color(0xFF5A6B60),
+                              height: 1.4,
+                            ),
                           ),
-                          const SizedBox(height: 18),
-                          Text(
-                            '${_remaining}s',
-                            style: const TextStyle(fontFamily: 'Inter Bold', fontSize: 32),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            formatSeconds(_plannedSeconds - _elapsedSeconds),
-                            style: const TextStyle(fontFamily: 'Inter Regular', fontSize: 12, color: Color(0xFF5A6B60)),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Prompt ${_index + 1} of ${_prompts.length}',
-                            style: const TextStyle(fontFamily: 'Inter Medium', fontSize: 12, color: Color(0xFF5A6B60)),
-                          ),
+                          if (_index < _prompts.length - 1) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              'Next prompt: ${_prompts[_index + 1].text}',
+                              style: const TextStyle(
+                                fontFamily: 'Inter Medium',
+                                fontSize: 12,
+                                color: Color(0xFF6A4C7A),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
               ),
-              const SizedBox(height: 16),
-              if (_status == _Status.begin)
-                ElevatedButton(onPressed: _begin, child: const Text('Begin session'))
-              else if (_status == _Status.running) ...[
-                ElevatedButton(onPressed: _pause, child: const Text('Pause')),
-                const SizedBox(height: 10),
-                OutlinedButton(onPressed: _advance, child: const Text('Done reflecting')),
-              ] else if (_status == _Status.paused) ...[
-                ElevatedButton(onPressed: _resume, child: const Text('Resume')),
-                const SizedBox(height: 10),
-                OutlinedButton(onPressed: _advance, child: const Text('Done reflecting')),
-              ] else ...[
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Close'),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFDCE7E1)),
                 ),
-                if (_saveFailed)
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _didSave = false;
-                        _saveFailed = false;
-                      });
-                      _saveIfNeeded();
-                    },
-                    child: const Text('Try saving again'),
-                  ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_status == _Status.begin)
+                      ElevatedButton.icon(
+                        onPressed: _begin,
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Begin session'),
+                      )
+                    else if (_status == _Status.running) ...[
+                      ElevatedButton.icon(
+                        onPressed: _pause,
+                        icon: const Icon(Icons.pause_rounded),
+                        label: const Text('Pause'),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _advance,
+                        icon: const Icon(Icons.check_rounded),
+                        label: const Text('Done reflecting'),
+                      ),
+                    ] else if (_status == _Status.paused) ...[
+                      ElevatedButton.icon(
+                        onPressed: _resume,
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Resume'),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _advance,
+                        icon: const Icon(Icons.check_rounded),
+                        label: const Text('Done reflecting'),
+                      ),
+                    ] else ...[
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.check_circle_outline_rounded),
+                        label: const Text('Close'),
+                      ),
+                      if (_saveFailed)
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _didSave = false;
+                              _saveFailed = false;
+                            });
+                            _saveIfNeeded();
+                          },
+                          child: const Text('Try saving again'),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),

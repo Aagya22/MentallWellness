@@ -35,32 +35,33 @@ class MoodLogTab extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         children: [
-          const Text(
-            'How are you feeling today?',
-            style: TextStyle(
-              fontFamily: 'PlayfairDisplay Bold',
-              fontSize: 20,
-              color: Color(0xFF1F2A22),
-            ),
+          _MoodLogHeroCard(
+            selectedLabel: selectedLabel,
+            selectedScore: selectedScore,
+          ),
+          const SizedBox(height: 14),
+          const MoodSectionTitle(
+            icon: Icons.mood_rounded,
+            title: 'Pick your mood',
           ),
           const SizedBox(height: 6),
           const Text(
-            'Select a mood to log',
+            'Choose the emotion that feels closest right now.',
             style: TextStyle(
-              fontFamily: 'Inter Medium',
-              fontSize: 13,
-              color: Color(0xFF7B8A7E),
+              fontFamily: 'Inter Regular',
+              fontSize: 12,
+              color: Color(0xFF5D6A62),
             ),
           ),
-          const SizedBox(height: 12),
-          MoodPickerGrid(
-            selectedLabel: selectedLabel,
-            onSelect: onSelect,
+          const SizedBox(height: 10),
+          MoodPickerGrid(selectedLabel: selectedLabel, onSelect: onSelect),
+          const SizedBox(height: 16),
+          const MoodSectionTitle(
+            icon: Icons.edit_note_outlined,
+            title: 'Note (optional)',
           ),
-          const SizedBox(height: 18),
-          const MoodSectionTitle(icon: Icons.edit_note_outlined, title: 'Note (optional)'),
           const SizedBox(height: 10),
           MoodNoteCard(
             selectedLabel: selectedLabel,
@@ -68,17 +69,96 @@ class MoodLogTab extends StatelessWidget {
             noteController: noteController,
             disabled: saving,
           ),
-          const SizedBox(height: 18),
-          const MoodSectionTitle(icon: Icons.blur_circular, title: 'This week'),
+          const SizedBox(height: 16),
+          const MoodSectionTitle(
+            icon: Icons.calendar_month_rounded,
+            title: 'This week',
+          ),
           const SizedBox(height: 10),
           MoodWeeklyOverviewCard(overview: state.overview),
-          const SizedBox(height: 18),
-          MoodSaveButton(
-            enabled: canSave,
-            saving: saving,
-            onPressed: onSave,
+          const SizedBox(height: 16),
+          MoodSaveButton(enabled: canSave, saving: saving, onPressed: onSave),
+        ],
+      ),
+    );
+  }
+}
+
+class _MoodLogHeroCard extends StatelessWidget {
+  const _MoodLogHeroCard({
+    required this.selectedLabel,
+    required this.selectedScore,
+  });
+
+  final String? selectedLabel;
+  final int? selectedScore;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSelection = selectedLabel != null && selectedScore != null;
+    final emoji = moodEmojiFor(moodType: selectedLabel, score: selectedScore);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 15),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2D5A44), Color(0xFF4E7A64)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x291F2A22),
+            blurRadius: 16,
+            offset: Offset(0, 8),
           ),
-          const SizedBox(height: 8),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              hasSelection ? emoji : '🙂',
+              style: const TextStyle(fontSize: 25),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Mood check-in',
+                  style: TextStyle(
+                    fontFamily: 'Inter Bold',
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasSelection
+                      ? '$selectedLabel • ${selectedScore.toString()}/10 selected'
+                      : 'Select your current mood and save a quick note.',
+                  style: TextStyle(
+                    fontFamily: 'Inter Regular',
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -104,13 +184,14 @@ class MoodNoteCard extends StatelessWidget {
     final label = selectedLabel;
     final score = selectedScore;
     final emoji = moodEmojiFor(moodType: label, score: score);
-    final bg = moodVisualFor(score).background;
+    final moodVisual = moodVisualFor(score);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7E1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,11 +199,11 @@ class MoodNoteCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                height: 42,
-                width: 42,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(14),
+                  color: moodVisual.background,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -130,10 +211,12 @@ class MoodNoteCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 20),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  score == null || label == null ? 'Select a mood to log' : '$label • $score/10',
+                  score == null || label == null
+                      ? 'No mood selected yet'
+                      : '$label • $score/10',
                   style: const TextStyle(
                     fontFamily: 'Inter Medium',
                     fontSize: 14,
@@ -141,6 +224,25 @@ class MoodNoteCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (score != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF1ED),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'Selected',
+                    style: TextStyle(
+                      fontFamily: 'Inter Medium',
+                      fontSize: 11,
+                      color: Color(0xFF2D5A44),
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -149,12 +251,20 @@ class MoodNoteCard extends StatelessWidget {
             enabled: !disabled,
             minLines: 3,
             maxLines: 5,
-            style: const TextStyle(fontFamily: 'Inter Regular', fontSize: 14, height: 1.4),
+            style: const TextStyle(
+              fontFamily: 'Inter Regular',
+              fontSize: 14,
+              height: 1.4,
+            ),
             decoration: const InputDecoration(
               hintText: 'What made you feel this way?',
               border: OutlineInputBorder(borderSide: BorderSide.none),
               filled: true,
               fillColor: Color(0xFFF4F1EA),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
           ),
         ],
@@ -177,32 +287,54 @@ class MoodSaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: enabled ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2D5A44),
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCE7E1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ElevatedButton.icon(
+            onPressed: enabled ? onPressed : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D5A44),
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: const Color(0xFFB8C5BD),
+              disabledForegroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            icon: Icon(saving ? Icons.sync : Icons.save_outlined),
+            label: Text(
+              saving ? 'Saving...' : 'Save mood',
+              style: const TextStyle(fontFamily: 'Inter Bold'),
+            ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        child: Text(
-          saving ? 'Saving...' : 'Save mood',
-          style: const TextStyle(fontFamily: 'Inter Bold'),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            enabled
+                ? 'Your entry will appear in History immediately.'
+                : 'Pick a mood first to enable saving.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Inter Regular',
+              fontSize: 11,
+              color: Color(0xFF5D6A62),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class MoodWeeklyOverviewCard extends StatelessWidget {
-  const MoodWeeklyOverviewCard({
-    super.key,
-    required this.overview,
-  });
+  const MoodWeeklyOverviewCard({super.key, required this.overview});
 
   final MoodOverviewEntity? overview;
 
@@ -215,6 +347,7 @@ class MoodWeeklyOverviewCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFDCE7E1)),
         ),
         child: const Text(
           'No mood overview yet',
@@ -228,25 +361,60 @@ class MoodWeeklyOverviewCard extends StatelessWidget {
     }
 
     final weekLabel = DateFormat('MMM d').format(data.weekStart);
+    final loggedCount = data.days.where((day) => day.entry != null).length;
+    final average = data.avgThisWeek?.score;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7E1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Week of $weekLabel',
-            style: const TextStyle(
-              fontFamily: 'Inter Medium',
-              fontSize: 12,
-              color: Color(0xFF7B8A7E),
-            ),
+          Row(
+            children: [
+              Text(
+                'Week of $weekLabel',
+                style: const TextStyle(
+                  fontFamily: 'Inter Medium',
+                  fontSize: 12,
+                  color: Color(0xFF7B8A7E),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF1ED),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '$loggedCount days logged',
+                  style: const TextStyle(
+                    fontFamily: 'Inter Medium',
+                    fontSize: 11,
+                    color: Color(0xFF2D5A44),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          if (average != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                'Average ${average.toStringAsFixed(1)}/10',
+                style: const TextStyle(
+                  fontFamily: 'Inter Bold',
+                  fontSize: 13,
+                  color: Color(0xFF1F2A22),
+                ),
+              ),
+            ),
           Row(
             children: List.generate(data.days.length, (i) {
               final day = data.days[i];
@@ -254,7 +422,9 @@ class MoodWeeklyOverviewCard extends StatelessWidget {
               final moodLabel = (day.entry?.moodType ?? '').trim();
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(right: i == data.days.length - 1 ? 0 : 6),
+                  padding: EdgeInsets.only(
+                    right: i == data.days.length - 1 ? 0 : 6,
+                  ),
                   child: _WeekDayMoodDot(
                     dayLabel: dayName,
                     moodLabel: moodLabel,
@@ -308,10 +478,7 @@ class _WeekDayMoodDot extends StatelessWidget {
                     color: Color(0xFF7B8A7E),
                   ),
                 )
-              : Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 20),
-                ),
+              : Text(emoji, style: const TextStyle(fontSize: 20)),
         ),
         const SizedBox(height: 8),
         Text(

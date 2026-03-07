@@ -18,7 +18,7 @@ class HomeQuickActionsSection extends StatelessWidget {
         const Text(
           'Quick Actions',
           style: TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
+            fontFamily: 'Inter Bold',
             fontSize: 18,
             color: Color(0xFF1F2A22),
           ),
@@ -126,7 +126,7 @@ class _QuickActionCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: 'PlayfairDisplay Bold',
+                    fontFamily: 'Inter Bold',
                     fontSize: 20,
                     height: 1.1,
                     color: Color(0xFF1F2A22),
