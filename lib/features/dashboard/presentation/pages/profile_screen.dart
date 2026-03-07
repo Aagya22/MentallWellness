@@ -7,8 +7,6 @@ import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mentalwellness/features/auth/data/datasources/remote/auth_remote_datasource.dart';
-import 'package:mentalwellness/features/auth/presentation/view_model/auth_viewmodel.dart';
-import 'package:mentalwellness/features/settings/presentation/pages/settings_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -274,31 +272,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  void _logout() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref.read(authViewModelProvider.notifier).logout();
-              if (!mounted) return;
-              Navigator.pushReplacementNamed(context, '/LandingScreen');
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
   ImageProvider? _getProfileImage() {
     if (_pickedImage != null) return FileImage(File(_pickedImage!.path));
     if (_storedProfilePictureUrl != null &&
@@ -311,133 +284,229 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = _nameCtrl.text.trim().isEmpty
+        ? 'Your profile'
+        : _nameCtrl.text.trim();
+    final displayEmail = _emailCtrl.text.trim().isEmpty
+        ? 'Update your email in edit mode'
+        : _emailCtrl.text.trim();
+    final hasProfilePicture =
+        _pickedImage != null ||
+        (_storedProfilePictureUrl != null &&
+            _storedProfilePictureUrl!.isNotEmpty);
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F1EA),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF4F1EA),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: const Text(
+          'Profile settings',
+          style: TextStyle(
+            fontFamily: 'Inter Bold',
+            fontSize: 18,
+            color: Color(0xFF1F2A22),
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: TextButton.icon(
+              onPressed: () => setState(() => _isEditing = !_isEditing),
+              icon: Icon(_isEditing ? Icons.close_rounded : Icons.edit_rounded),
+              label: Text(_isEditing ? 'Cancel' : 'Edit'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF2D5A44),
+                textStyle: const TextStyle(
+                  fontFamily: 'Inter Bold',
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Profile',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          tooltip: 'Settings',
-                          icon: const Icon(Icons.settings),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(_isEditing ? Icons.close : Icons.edit),
-                          onPressed: () =>
-                              setState(() => _isEditing = !_isEditing),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Center(
-                  child: GestureDetector(
-                    onTap: _isEditing ? _showImagePickerSheet : null,
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 56,
-                          backgroundColor: Colors.grey.shade200,
-                          backgroundImage: _getProfileImage(),
-                          child:
-                              _pickedImage == null &&
-                                  (_storedProfilePictureUrl == null ||
-                                      _storedProfilePictureUrl!.isEmpty)
-                              ? const Icon(
-                                  Icons.camera_alt,
-                                  size: 36,
-                                  color: Colors.grey,
-                                )
-                              : null,
-                        ),
-                        if (_isEditing && _pickedImage != null)
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: CircleAvatar(
-                              radius: 16,
-                              backgroundColor: Colors.red,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 12,
-                                ),
-                                onPressed: () =>
-                                    setState(() => _pickedImage = null),
-                                padding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_isEditing)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton.icon(
-                        onPressed: _showImagePickerSheet,
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Update Picture'),
-                      ),
-                      const SizedBox(width: 8),
-                      TextButton.icon(
-                        onPressed: _deleteProfilePicture,
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        label: const Text('Delete Picture'),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFFDCE7E1)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1F2A22).withValues(alpha: 0.06),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                const SizedBox(height: 32),
-                _field('Full Name', _nameCtrl),
-                _field('Email', _emailCtrl),
-                _field('Username', _usernameCtrl),
-                _field('Phone', _phoneCtrl, keyboard: TextInputType.phone),
-                const SizedBox(height: 30),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text('Save Changes'),
-                  onPressed: _isEditing ? _saveProfile : null,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _isEditing ? _showImagePickerSheet : null,
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 56,
+                              backgroundColor: Colors.grey.shade200,
+                              backgroundImage: _getProfileImage(),
+                              child:
+                                  _pickedImage == null &&
+                                      (_storedProfilePictureUrl == null ||
+                                          _storedProfilePictureUrl!.isEmpty)
+                                  ? const Icon(
+                                      Icons.camera_alt,
+                                      size: 36,
+                                      color: Colors.grey,
+                                    )
+                                  : null,
+                            ),
+                            if (_isEditing && _pickedImage != null)
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: Colors.red,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                    onPressed: () =>
+                                        setState(() => _pickedImage = null),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        displayName,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter Bold',
+                          fontSize: 20,
+                          color: Color(0xFF1F2A22),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        displayEmail,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'Inter Regular',
+                          fontSize: 13,
+                          color: Color(0xFF5D6A62),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(48),
+                if (_isEditing)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _showImagePickerSheet,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF2D5A44),
+                            side: const BorderSide(color: Color(0xFFBCD0C4)),
+                          ),
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          label: const Text('Update picture'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: hasProfilePicture
+                              ? _deleteProfilePicture
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF8B2E2E),
+                            side: const BorderSide(color: Color(0xFFD8BDBD)),
+                          ),
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Delete picture'),
+                        ),
+                      ],
+                    ),
                   ),
-                  onPressed: _logout,
+                const SizedBox(height: 18),
+                const Text(
+                  'Account details',
+                  style: TextStyle(
+                    fontFamily: 'Inter Bold',
+                    fontSize: 16,
+                    color: Color(0xFF1F2A22),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFDCE7E1)),
+                  ),
+                  child: Column(
+                    children: [
+                      _field('Full Name', _nameCtrl),
+                      _field('Email', _emailCtrl),
+                      _field('Username', _usernameCtrl),
+                      _field(
+                        'Phone',
+                        _phoneCtrl,
+                        keyboard: TextInputType.phone,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: Icon(
+                      _isEditing ? Icons.save_outlined : Icons.lock_outline,
+                    ),
+                    label: Text(
+                      _isEditing ? 'Save changes' : 'Enable edit mode to save',
+                    ),
+                    onPressed: _isEditing ? _saveProfile : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D5A44),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFB8C5BD),
+                      disabledForegroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -458,9 +527,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         controller: ctrl,
         enabled: _isEditing,
         keyboardType: keyboard,
+        style: const TextStyle(
+          fontFamily: 'Inter Medium',
+          fontSize: 14,
+          color: Color(0xFF1F2A22),
+        ),
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
+          filled: true,
+          fillColor: _isEditing ? Colors.white : const Color(0xFFF3F7F4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
+          labelStyle: const TextStyle(
+            fontFamily: 'Inter Medium',
+            color: Color(0xFF5D6A62),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFD3E0D8)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFD3E0D8)),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE1EAE5)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF2D5A44), width: 1.3),
+          ),
         ),
         validator: (v) => v == null || v.isEmpty ? 'Required' : null,
       ),

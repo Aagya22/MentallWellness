@@ -164,7 +164,7 @@ class _AdminUserCreateScreenState extends ConsumerState<AdminUserCreateScreen> {
             leading: IconButton(
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
+                color: Colors.black,
                 size: 20,
               ),
               onPressed: () => Navigator.pop(context),
@@ -322,7 +322,6 @@ class _AdminUserCreateScreenState extends ConsumerState<AdminUserCreateScreen> {
                   ),
                 ),
 
-
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
                   child: SizedBox(
@@ -365,8 +364,6 @@ class _AdminUserCreateScreenState extends ConsumerState<AdminUserCreateScreen> {
     );
   }
 }
-
-
 
 class _FieldTile extends StatelessWidget {
   final IconData icon;

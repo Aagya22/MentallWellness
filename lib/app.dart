@@ -7,6 +7,7 @@ import 'package:mentalwellness/features/dashboard/presentation/pages/botton_navi
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding2nd_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding3rd_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboardingfirst_screen.dart';
+import 'package:mentalwellness/features/settings/presentation/pages/change_password_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_dashboard_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_users_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_bottom_navigation_screen.dart';
@@ -32,6 +33,7 @@ class App extends StatelessWidget {
         '/LandingScreen': (context) => const LandingScreen(),
         '/LoginScreen': (context) => const LoginScreen(),
         '/RegisterScreen': (context) => const RegisterScreen(),
+        '/ChangePasswordScreen': (context) => const ChangePasswordScreen(),
         '/BottomNavigationScreen': (context) => const BottomNavigationScreen(),
         '/AdminDashboardScreen': (context) => const AdminDashboardScreen(),
         '/AdminUsersScreen': (context) => const AdminUsersScreen(),

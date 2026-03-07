@@ -29,6 +29,25 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
        _userSessionService = userSessionService,
        _tokenService = tokenService;
 
+  String _extractMessage(dynamic body, {required String fallback}) {
+    if (body is Map<String, dynamic>) {
+      final direct = body['message'];
+      if (direct is String && direct.trim().isNotEmpty) return direct;
+
+      final error = body['error'];
+      if (error is String && error.trim().isNotEmpty) return error;
+
+      final data = body['data'];
+      if (data is Map<String, dynamic>) {
+        final nestedMessage = data['message'];
+        if (nestedMessage is String && nestedMessage.trim().isNotEmpty) {
+          return nestedMessage;
+        }
+      }
+    }
+    return fallback;
+  }
+
   @override
   Future<AuthApiModel?> getUserById(String authId) async {
     // Backend exposes current user via /api/auth/whoami (JWT required).
@@ -162,5 +181,34 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
     }
 
     return null;
+  }
+
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    try {
+      final response = await _apiClient.put(
+        ApiEndpoints.changePassword,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'confirmNewPassword': confirmNewPassword,
+        },
+      );
+
+      return _extractMessage(
+        response.data,
+        fallback: 'Password changed successfully',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractMessage(
+          e.response?.data,
+          fallback: 'Failed to change password',
+        ),
+      );
+    }
   }
 }

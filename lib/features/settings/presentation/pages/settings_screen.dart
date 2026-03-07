@@ -4,6 +4,7 @@ import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/auth/presentation/view_model/auth_viewmodel.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/profile_screen.dart';
+import 'package:mentalwellness/features/settings/presentation/pages/change_password_screen.dart';
 import 'package:mentalwellness/features/settings/presentation/pages/privacy_security_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -68,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
         title: const Text(
           'Settings',
           style: TextStyle(
-            fontFamily: 'PlayfairDisplay Bold',
+            fontFamily: 'Inter Bold',
             fontSize: 18,
             color: _text,
           ),
@@ -117,9 +118,9 @@ class SettingsScreen extends ConsumerWidget {
             subtitle:
                 'Update your name, avatar, email and personal information.',
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
             },
           ),
           const SizedBox(height: 12),
@@ -129,7 +130,20 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Manage your journal passcode and account security.',
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PrivacySecurityScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const PrivacySecurityScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _SettingsOptionCard(
+            icon: Icons.lock_reset_outlined,
+            title: 'Change Password',
+            subtitle: 'Update your login password for better account safety.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
               );
             },
           ),
@@ -139,10 +153,7 @@ class SettingsScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout, color: Colors.red),
             label: const Text(
               'Logout',
-              style: TextStyle(
-                fontFamily: 'Inter Bold',
-                color: Colors.red,
-              ),
+              style: TextStyle(fontFamily: 'Inter Bold', color: Colors.red),
             ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Colors.red),
@@ -196,9 +207,7 @@ class _SettingsOptionCard extends StatelessWidget {
                 color: const Color(0xFFEAF1ED),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Center(
-                child: Icon(icon, color: _accent),
-              ),
+              child: Center(child: Icon(icon, color: _accent)),
             ),
             const SizedBox(width: 12),
             Expanded(

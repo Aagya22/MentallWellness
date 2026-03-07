@@ -16,25 +16,106 @@ class MoodHistoryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final entries = state.moods;
+
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: state.moods.isEmpty
+      child: entries.isEmpty
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              children: const [
-                _EmptyRecentMoodCard(),
-              ],
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              children: const [_EmptyRecentMoodCard()],
             )
           : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              itemCount: state.moods.length,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              itemCount: entries.length + 1,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-                return _MoodEntryTile(entry: state.moods[index]);
+                if (index == 0) {
+                  return _HistorySummaryCard(entries: entries);
+                }
+                return _MoodEntryTile(entry: entries[index - 1]);
               },
             ),
+    );
+  }
+}
+
+class _HistorySummaryCard extends StatelessWidget {
+  const _HistorySummaryCard({required this.entries});
+
+  final List<MoodEntity> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = entries.length;
+    final avg =
+        entries.map((e) => e.mood).fold<int>(0, (sum, value) => sum + value) /
+        count;
+    final latest = entries.first;
+    final latestEmoji = moodEmojiFor(
+      moodType: latest.moodType,
+      score: latest.mood,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 15),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2D5A44), Color(0xFF4E7A64)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x291F2A22),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.center,
+            child: Text(latestEmoji, style: const TextStyle(fontSize: 24)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Mood history',
+                  style: TextStyle(
+                    fontFamily: 'Inter Bold',
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$count entries • ${avg.toStringAsFixed(1)}/10 average',
+                  style: TextStyle(
+                    fontFamily: 'Inter Regular',
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -46,57 +127,91 @@ class _MoodEntryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateText = DateFormat('EEE, MMM d').format(entry.date);
+    final dateText = DateFormat('EEE, MMM d • h:mm a').format(entry.date);
     final info = moodVisualFor(entry.mood);
     final emoji = moodEmojiFor(moodType: entry.moodType, score: entry.mood);
-    final subtitle = [
-      if (entry.moodType != null && entry.moodType!.trim().isNotEmpty) entry.moodType!.trim(),
-      if (entry.note != null && entry.note!.trim().isNotEmpty) entry.note!.trim(),
-    ].join(' • ');
+    final moodType = (entry.moodType ?? '').trim();
+    final note = (entry.note ?? '').trim();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7E1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 44,
-            width: 44,
+            height: 46,
+            width: 46,
             decoration: BoxDecoration(
               color: info.background,
               borderRadius: BorderRadius.circular(14),
             ),
             alignment: Alignment.center,
-            child: Text(emoji, style: const TextStyle(fontSize: 20)),
+            child: Text(emoji, style: const TextStyle(fontSize: 22)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$dateText • ${entry.mood}/10',
-                  style: const TextStyle(
-                    fontFamily: 'Inter Medium',
-                    fontSize: 13,
-                    color: Color(0xFF1F2A22),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        dateText,
+                        style: const TextStyle(
+                          fontFamily: 'Inter Medium',
+                          fontSize: 12,
+                          color: Color(0xFF5A6B60),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF1ED),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${entry.mood}/10',
+                        style: const TextStyle(
+                          fontFamily: 'Inter Bold',
+                          fontSize: 11,
+                          color: Color(0xFF2D5A44),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (subtitle.isNotEmpty) ...[
+                if (moodType.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    moodType,
+                    style: const TextStyle(
+                      fontFamily: 'Inter Bold',
+                      fontSize: 14,
+                      color: Color(0xFF1F2A22),
+                    ),
+                  ),
+                ],
+                if (note.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    subtitle,
+                    note,
                     style: const TextStyle(
                       fontFamily: 'Inter Regular',
                       fontSize: 12,
                       height: 1.35,
-                      color: Color(0xFF7B8A7E),
+                      color: Color(0xFF5A6B60),
                     ),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -116,35 +231,36 @@ class _EmptyRecentMoodCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE7E1)),
       ),
-      child: Row(
+      child: const Column(
         children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF1ED),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.sentiment_satisfied_alt_outlined,
-              color: Color(0xFF2D5A44),
+          Icon(
+            Icons.sentiment_satisfied_alt_outlined,
+            size: 34,
+            color: Color(0xFF2D5A44),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'No mood entries yet',
+            style: TextStyle(
+              fontFamily: 'Inter Bold',
+              fontSize: 15,
+              color: Color(0xFF1F2A22),
             ),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'No mood entries yet',
-              style: TextStyle(
-                fontFamily: 'Inter Medium',
-                fontSize: 13,
-                color: Color(0xFF1F2A22),
-              ),
+          SizedBox(height: 4),
+          Text(
+            'Log your first mood to start building your history.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Inter Regular',
+              fontSize: 12,
+              color: Color(0xFF5D6A62),
             ),
           ),
         ],
