@@ -17,4 +17,5 @@ abstract interface class IMoodRepository {
     String? note,
     DateTime? date,
   });
+  Future<Either<Failure, bool>> deleteMood({required String id});
 }

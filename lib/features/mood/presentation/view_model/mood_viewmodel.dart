@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentalwellness/features/mood/domain/usecases/create_mood_usecase.dart';
+import 'package:mentalwellness/features/mood/domain/usecases/delete_mood_usecase.dart';
 import 'package:mentalwellness/features/mood/domain/usecases/get_mood_overview_usecase.dart';
 import 'package:mentalwellness/features/mood/domain/usecases/get_moods_usecase.dart';
 import 'package:mentalwellness/features/mood/presentation/state/mood_state.dart';
@@ -12,12 +13,14 @@ class MoodViewModel extends Notifier<MoodState> {
   late final GetMoodOverviewUsecase _getOverview;
   late final GetMoodsUsecase _getMoods;
   late final CreateMoodUsecase _create;
+  late final DeleteMoodUsecase _delete;
 
   @override
   MoodState build() {
     _getOverview = ref.read(getMoodOverviewUsecaseProvider);
     _getMoods = ref.read(getMoodsUsecaseProvider);
     _create = ref.read(createMoodUsecaseProvider);
+    _delete = ref.read(deleteMoodUsecaseProvider);
 
     Future.microtask(refresh);
     return const MoodState();
@@ -32,7 +35,8 @@ class MoodViewModel extends Notifier<MoodState> {
     final overview = overviewRes.fold((_) => null, (r) => r);
     final moods = moodsRes.fold((_) => null, (r) => r);
 
-    final error = overviewRes.fold((f) => f.message, (_) => null) ??
+    final error =
+        overviewRes.fold((f) => f.message, (_) => null) ??
         moodsRes.fold((f) => f.message, (_) => null);
 
     if (error != null || overview == null || moods == null) {
@@ -40,7 +44,11 @@ class MoodViewModel extends Notifier<MoodState> {
       return;
     }
 
-    state = state.copyWith(status: MoodStatus.loaded, overview: overview, moods: moods);
+    state = state.copyWith(
+      status: MoodStatus.loaded,
+      overview: overview,
+      moods: moods,
+    );
   }
 
   Future<bool> logMood({
@@ -50,10 +58,36 @@ class MoodViewModel extends Notifier<MoodState> {
     DateTime? date,
   }) async {
     state = state.copyWith(status: MoodStatus.saving, errorMessage: null);
-    final res = await _create(mood: mood, moodType: moodType, note: note, date: date);
+    final res = await _create(
+      mood: mood,
+      moodType: moodType,
+      note: note,
+      date: date,
+    );
     return res.fold(
       (f) {
-        state = state.copyWith(status: MoodStatus.error, errorMessage: f.message);
+        state = state.copyWith(
+          status: MoodStatus.error,
+          errorMessage: f.message,
+        );
+        return false;
+      },
+      (_) async {
+        await refresh();
+        return true;
+      },
+    );
+  }
+
+  Future<bool> deleteMood({required String id}) async {
+    state = state.copyWith(status: MoodStatus.saving, errorMessage: null);
+    final res = await _delete(id: id);
+    return res.fold(
+      (f) {
+        state = state.copyWith(
+          status: MoodStatus.error,
+          errorMessage: f.message,
+        );
         return false;
       },
       (_) async {

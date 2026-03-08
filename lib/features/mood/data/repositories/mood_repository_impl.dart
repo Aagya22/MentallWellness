@@ -37,10 +37,15 @@ class MoodRepositoryImpl implements IMoodRepository {
       final model = await _remote.getOverview();
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -58,10 +63,15 @@ class MoodRepositoryImpl implements IMoodRepository {
       list.sort((a, b) => b.date.compareTo(a.date));
       return Right(list);
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -82,10 +92,15 @@ class MoodRepositoryImpl implements IMoodRepository {
       list.sort((a, b) => a.dayKey.compareTo(b.dayKey));
       return Right(list);
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }
@@ -111,10 +126,39 @@ class MoodRepositoryImpl implements IMoodRepository {
       );
       return Right(model.toEntity());
     } on DioException catch (e) {
-      return Left(ApiFailure(
-        message: e.response?.data?['message']?.toString() ?? e.message ?? 'API error',
-        statusCode: e.response?.statusCode,
-      ));
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
+    } catch (e) {
+      return Left(ApiFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> deleteMood({required String id}) async {
+    try {
+      final connected = await _isConnected();
+      if (!connected) {
+        return const Left(ApiFailure(message: 'No internet connection'));
+      }
+      await _remote.deleteMood(id: id);
+      return const Right(true);
+    } on DioException catch (e) {
+      return Left(
+        ApiFailure(
+          message:
+              e.response?.data?['message']?.toString() ??
+              e.message ??
+              'API error',
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ApiFailure(message: e.toString()));
     }

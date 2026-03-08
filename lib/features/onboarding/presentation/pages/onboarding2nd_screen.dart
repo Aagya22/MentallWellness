@@ -80,7 +80,7 @@ class Onboarding2ndScreen extends StatelessWidget {
                 flex: 3,
                 child: Center(
                   child: Image.asset(
-                    "assets/images/meditate.jpg",
+                    "assets/images/meddd.png",
                     fit: BoxFit.contain,
                   ),
                 ),

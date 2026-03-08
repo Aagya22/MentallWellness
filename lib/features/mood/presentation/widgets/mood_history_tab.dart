@@ -9,10 +9,12 @@ class MoodHistoryTab extends StatelessWidget {
     super.key,
     required this.state,
     required this.onRefresh,
+    required this.onDelete,
   });
 
   final MoodState state;
   final Future<void> Function() onRefresh;
+  final Future<void> Function(MoodEntity entry) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +32,16 @@ class MoodHistoryTab extends StatelessWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               itemCount: entries.length + 1,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return _HistorySummaryCard(entries: entries);
                 }
-                return _MoodEntryTile(entry: entries[index - 1]);
+                final entry = entries[index - 1];
+                return _MoodEntryTile(
+                  entry: entry,
+                  onDelete: () => onDelete(entry),
+                );
               },
             ),
     );
@@ -121,9 +127,10 @@ class _HistorySummaryCard extends StatelessWidget {
 }
 
 class _MoodEntryTile extends StatelessWidget {
-  const _MoodEntryTile({required this.entry});
+  const _MoodEntryTile({required this.entry, required this.onDelete});
 
   final MoodEntity entry;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +177,7 @@ class _MoodEntryTile extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -187,6 +195,25 @@ class _MoodEntryTile extends StatelessWidget {
                           color: Color(0xFF2D5A44),
                         ),
                       ),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'delete') onDelete();
+                      },
+                      icon: const Icon(
+                        Icons.more_vert_rounded,
+                        size: 18,
+                        color: Color(0xFF5A6B60),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Text('Delete'),
+                        ),
+                      ],
                     ),
                   ],
                 ),

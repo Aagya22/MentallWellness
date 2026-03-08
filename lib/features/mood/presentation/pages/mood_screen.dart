@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mentalwellness/features/mood/domain/entities/mood_entity.dart';
 import 'package:mentalwellness/features/mood/presentation/state/mood_state.dart';
 import 'package:mentalwellness/features/mood/presentation/view_model/mood_viewmodel.dart';
 import 'package:mentalwellness/features/mood/presentation/widgets/mood_history_tab.dart';
@@ -22,6 +23,44 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
   void dispose() {
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _confirmDeleteMood({
+    required MoodEntity entry,
+    required MoodViewModel notifier,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete mood entry?'),
+          content: const Text('This mood entry will be permanently deleted.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final ok = await notifier.deleteMood(id: entry.id);
+    if (!mounted) return;
+
+    final latestState = ref.read(moodViewModelProvider);
+    final message = ok
+        ? 'Mood deleted'
+        : (latestState.errorMessage ?? 'Failed to delete mood');
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -175,7 +214,17 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
                     overview: state.overview,
                     onRefresh: notifier.refresh,
                   ),
-                  MoodHistoryTab(state: state, onRefresh: notifier.refresh),
+                  MoodHistoryTab(
+                    state: state,
+                    onRefresh: notifier.refresh,
+                    onDelete: (entry) async {
+                      if (state.status == MoodStatus.saving) return;
+                      await _confirmDeleteMood(
+                        entry: entry,
+                        notifier: notifier,
+                      );
+                    },
+                  ),
                 ],
               );
             },
