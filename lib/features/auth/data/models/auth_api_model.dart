@@ -35,7 +35,7 @@ class AuthApiModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final json = <String, dynamic>{
       'fullName': fullName,
       'email': email,
       'phoneNumber': phoneNumber,
@@ -45,6 +45,9 @@ class AuthApiModel {
       'imageUrl': profilePicture,
       'role': role ?? 'user',
     };
+
+    json.removeWhere((_, value) => value == null);
+    return json;
   }
 
   factory AuthApiModel.fromEntity(AuthEntity entity) {
