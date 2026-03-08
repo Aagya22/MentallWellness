@@ -31,6 +31,20 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
     }
   }
 
+  Future<void> _editUser() async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return;
+
+    await Navigator.pushNamed(
+      context,
+      '/AdminUserEditScreen',
+      arguments: userId,
+    );
+
+    if (!mounted) return;
+    ref.read(adminUserCrudViewModelProvider.notifier).fetchUserById(userId);
+  }
+
   Future<void> _deleteUser() async {
     final userId = _userId;
     final user = ref.read(adminUserCrudViewModelProvider).user;
@@ -118,39 +132,12 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
                 fontSize: 17,
               ),
             ),
-            actions: [
-              IconButton(
-                tooltip: 'Edit',
-                icon: const Icon(
-                  Icons.edit_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                onPressed: () async {
-                  await Navigator.pushNamed(
-                    context,
-                    '/AdminUserEditScreen',
-                    arguments: userId,
-                  );
-                  if (!mounted) return;
-                  ref
-                      .read(adminUserCrudViewModelProvider.notifier)
-                      .fetchUserById(userId);
-                },
-              ),
-              IconButton(
-                tooltip: 'Delete',
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                onPressed: _deleteUser,
-              ),
-            ],
           ),
         ),
       ),
+      bottomNavigationBar: user == null
+          ? null
+          : _DetailActionBar(onEdit: _editUser, onDelete: _deleteUser),
       body: SafeArea(
         child: Builder(
           builder: (context) {
@@ -177,221 +164,161 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
             return SingleChildScrollView(
               child: Column(
                 children: [
-                  // ── Profile banner ──────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [kAdminPrimary, kAdminSecondary],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 86,
-                          height: 86,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
-                            gradient: avatar == null
-                                ? const LinearGradient(
-                                    colors: [
-                                      Color(0xFF818CF8),
-                                      Color(0xFFA78BFA),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : null,
+                          // ── Profile banner ──────────────────────────────────
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [kAdminPrimary, kAdminSecondary],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 86,
+                                  height: 86,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                    gradient: avatar == null
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Color(0xFF818CF8),
+                                              Color(0xFFA78BFA),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : null,
+                                  ),
+                                  child: ClipOval(
+                                    child: avatar != null
+                                        ? Image(
+                                            image: avatar,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Center(
+                                            child: Text(
+                                              initials,
+                                              style: const TextStyle(
+                                                fontSize: 34,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  user.fullName,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    user.role.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isAdmin
+                                          ? const Color(0xFFDDD6FE)
+                                          : const Color(0xFFBBF7D0),
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: ClipOval(
-                            child: avatar != null
-                                ? Image(image: avatar, fit: BoxFit.cover)
-                                : Center(
-                                    child: Text(
-                                      initials,
-                                      style: const TextStyle(
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+
+                          // ── Info card ───────────────────────────────────────
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0A000000),
+                                    blurRadius: 16,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  _InfoRow(
+                                    icon: Icons.email_outlined,
+                                    label: 'Email',
+                                    value: user.email,
+                                  ),
+                                  const Divider(height: 1, indent: 62),
+                                  _InfoRow(
+                                    icon: Icons.alternate_email_rounded,
+                                    label: 'Username',
+                                    value: '@${user.username}',
+                                  ),
+                                  const Divider(height: 1, indent: 62),
+                                  _InfoRow(
+                                    icon: Icons.phone_outlined,
+                                    label: 'Phone',
+                                    value: user.phoneNumber.isNotEmpty
+                                        ? user.phoneNumber
+                                        : '—',
+                                  ),
+                                  const Divider(height: 1, indent: 62),
+                                  _InfoRow(
+                                    icon: Icons.shield_outlined,
+                                    label: 'Role',
+                                    value: user.role,
+                                    trailing: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isAdmin
+                                            ? const Color(0xFFEDE9FE)
+                                            : const Color(0xFFDCFCE7),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        user.role.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: isAdmin
+                                              ? kAdminSecondary
+                                              : const Color(0xFF16A34A),
+                                        ),
                                       ),
                                     ),
                                   ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          user.fullName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            user.role.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: isAdmin
-                                  ? const Color(0xFFDDD6FE)
-                                  : const Color(0xFFBBF7D0),
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ── Info card ───────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0A000000),
-                            blurRadius: 16,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon: Icons.email_outlined,
-                            label: 'Email',
-                            value: user.email,
-                          ),
-                          const Divider(height: 1, indent: 62),
-                          _InfoRow(
-                            icon: Icons.alternate_email_rounded,
-                            label: 'Username',
-                            value: '@${user.username}',
-                          ),
-                          const Divider(height: 1, indent: 62),
-                          _InfoRow(
-                            icon: Icons.phone_outlined,
-                            label: 'Phone',
-                            value: user.phoneNumber.isNotEmpty
-                                ? user.phoneNumber
-                                : '—',
-                          ),
-                          const Divider(height: 1, indent: 62),
-                          _InfoRow(
-                            icon: Icons.shield_outlined,
-                            label: 'Role',
-                            value: user.role,
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isAdmin
-                                    ? const Color(0xFFEDE9FE)
-                                    : const Color(0xFFDCFCE7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                user.role.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isAdmin
-                                      ? kAdminSecondary
-                                      : const Color(0xFF16A34A),
-                                ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // ── Action buttons ──────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kAdminPrimary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              icon: const Icon(Icons.edit_rounded, size: 18),
-                              label: const Text(
-                                'Edit',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              onPressed: () async {
-                                await Navigator.pushNamed(
-                                  context,
-                                  '/AdminUserEditScreen',
-                                  arguments: userId,
-                                );
-                                if (!mounted) return;
-                                ref
-                                    .read(
-                                      adminUserCrudViewModelProvider.notifier,
-                                    )
-                                    .fetchUserById(userId);
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFEF2F2),
-                                foregroundColor: const Color(0xFFDC2626),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              icon: const Icon(
-                                Icons.delete_outline_rounded,
-                                size: 18,
-                              ),
-                              label: const Text(
-                                'Delete',
-                                style: TextStyle(fontWeight: FontWeight.w700),
-                              ),
-                              onPressed: _deleteUser,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -459,6 +386,80 @@ class _InfoRow extends StatelessWidget {
           ),
           if (trailing != null) trailing!,
         ],
+      ),
+    );
+  }
+}
+
+class _DetailActionBar extends StatelessWidget {
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _DetailActionBar({required this.onEdit, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAdminPrimary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.edit_rounded, size: 18),
+                  label: const Text(
+                    'Edit User',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  onPressed: onEdit,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                    backgroundColor: const Color(0xFFFEF2F2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text(
+                    'Delete',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  onPressed: onDelete,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

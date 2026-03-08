@@ -12,7 +12,7 @@ ThemeData getApplicationTheme() {
     ),
 
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.lightBlueAccent,
+      backgroundColor: Color.fromARGB(255, 4, 93, 4),
       titleTextStyle: TextStyle(
         fontFamily: 'Inter Bold',
         fontSize: 20,

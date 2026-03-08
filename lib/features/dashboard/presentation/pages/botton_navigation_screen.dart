@@ -12,10 +12,12 @@ class BottomNavigationScreen extends ConsumerStatefulWidget {
   const BottomNavigationScreen({super.key});
 
   @override
-  ConsumerState<BottomNavigationScreen> createState() => _BottomNavigationScreenState();
+  ConsumerState<BottomNavigationScreen> createState() =>
+      _BottomNavigationScreenState();
 }
 
-class _BottomNavigationScreenState extends ConsumerState<BottomNavigationScreen> {
+class _BottomNavigationScreenState
+    extends ConsumerState<BottomNavigationScreen> {
   int _selectedIndex = 0;
   Timer? _duePoll;
 
@@ -38,12 +40,18 @@ class _BottomNavigationScreenState extends ConsumerState<BottomNavigationScreen>
     Future.microtask(() async {
       await ref.read(localNotificationServiceProvider).init();
 
-      await ref.read(reminderNotificationsViewModelProvider.notifier).fetchHistory();
-      
-      ref.read(reminderNotificationsViewModelProvider.notifier).checkDueAndNotify();
+      await ref
+          .read(reminderNotificationsViewModelProvider.notifier)
+          .fetchHistory();
+
+      ref
+          .read(reminderNotificationsViewModelProvider.notifier)
+          .checkDueAndNotify();
       _duePoll?.cancel();
       _duePoll = Timer.periodic(const Duration(minutes: 1), (_) {
-        ref.read(reminderNotificationsViewModelProvider.notifier).checkDueAndNotify();
+        ref
+            .read(reminderNotificationsViewModelProvider.notifier)
+            .checkDueAndNotify();
       });
     });
   }
@@ -56,29 +64,38 @@ class _BottomNavigationScreenState extends ConsumerState<BottomNavigationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isTablet = MediaQuery.sizeOf(context).width >= 900;
+
+    final navBar = BottomNavigationBar(
+      currentIndex: _selectedIndex,
+      onTap: _onItemTapped,
+      type: BottomNavigationBarType.fixed,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today),
+          label: 'Calendar',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ],
+    );
+
     return Scaffold(
       body: _screens[_selectedIndex],
-
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Calendar',
-          ),
-         
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
+      bottomNavigationBar: isTablet
+          ? Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SafeArea(
+                top: false,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: navBar,
+                  ),
+                ),
+              ),
+            )
+          : navBar,
     );
   }
 }

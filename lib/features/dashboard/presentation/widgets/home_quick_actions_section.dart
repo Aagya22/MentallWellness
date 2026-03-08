@@ -12,6 +12,24 @@ class HomeQuickActionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final journalCard = _QuickActionCard(
+      tag: 'JOURNAL',
+      title: 'Journal',
+      actionText: 'Write today',
+      accentColor: const Color(0xFFF1E3DD),
+      trailingAsset: 'assets/images/journal.jpg',
+      onTap: onTapJournal,
+    );
+
+    final exerciseCard = _QuickActionCard(
+      tag: 'EXERCISES',
+      title: 'Exercises',
+      actionText: 'Log workout',
+      accentColor: const Color(0xFFE4F0EA),
+      trailingAsset: 'assets/images/meditate.jpg',
+      onTap: onTapExercises,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -24,30 +42,29 @@ class HomeQuickActionsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _QuickActionCard(
-                tag: 'JOURNAL',
-                title: 'Journal',
-                actionText: 'Write today',
-                accentColor: const Color(0xFFF1E3DD),
-                trailingAsset: 'assets/images/journal.jpg',
-                onTap: onTapJournal,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _QuickActionCard(
-                tag: 'EXERCISES',
-                title: 'Exercises',
-                actionText: 'Log workout',
-                accentColor: const Color(0xFFE4F0EA),
-                trailingAsset: 'assets/images/meditate.jpg',
-                onTap: onTapExercises,
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            if (!isWide) {
+              return Row(
+                children: [
+                  Expanded(child: journalCard),
+                  const SizedBox(width: 12),
+                  Expanded(child: exerciseCard),
+                ],
+              );
+            }
+
+            final cardWidth = (constraints.maxWidth - 12) / 2;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(width: cardWidth, child: journalCard),
+                SizedBox(width: cardWidth, child: exerciseCard),
+              ],
+            );
+          },
         ),
       ],
     );

@@ -75,95 +75,121 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _border, width: 1.5),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: const Color(0xFFEAF1ED),
-                  backgroundImage: profileImage,
-                  child: profileImage == null
-                      ? const Icon(Icons.person, color: _accent)
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Inter Bold',
-                      fontSize: 16,
-                      color: _text,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTablet = constraints.maxWidth >= 900;
+
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isTablet ? 860 : double.infinity,
+              ),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _border, width: 1.5),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: const Color(0xFFEAF1ED),
+                          backgroundImage: profileImage,
+                          child: profileImage == null
+                              ? const Icon(Icons.person, color: _accent)
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: 'Inter Bold',
+                              fontSize: 16,
+                              color: _text,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          _SettingsOptionCard(
-            icon: Icons.person_outline,
-            title: 'Profile Settings',
-            subtitle:
-                'Update your name, avatar, email and personal information.',
-            onTap: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
-            },
-          ),
-          const SizedBox(height: 12),
-          _SettingsOptionCard(
-            icon: Icons.shield_outlined,
-            title: 'Privacy & Security',
-            subtitle: 'Manage your journal passcode and account security.',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const PrivacySecurityScreen(),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          _SettingsOptionCard(
-            icon: Icons.lock_reset_outlined,
-            title: 'Change Password',
-            subtitle: 'Update your login password for better account safety.',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: () => _confirmLogout(context, ref),
-            icon: const Icon(Icons.logout, color: Colors.red),
-            label: const Text(
-              'Logout',
-              style: TextStyle(fontFamily: 'Inter Bold', color: Colors.red),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.red),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                  const SizedBox(height: 12),
+                  _SettingsOptionCard(
+                    icon: Icons.person_outline,
+                    title: 'Profile Settings',
+                    subtitle:
+                        'Update your name, avatar, email and personal information.',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProfileScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _SettingsOptionCard(
+                    icon: Icons.shield_outlined,
+                    title: 'Privacy & Security',
+                    subtitle:
+                        'Manage your journal passcode and account security.',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PrivacySecurityScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _SettingsOptionCard(
+                    icon: Icons.lock_reset_outlined,
+                    title: 'Change Password',
+                    subtitle:
+                        'Update your login password for better account safety.',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ChangePasswordScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                  OutlinedButton.icon(
+                    onPressed: () => _confirmLogout(context, ref),
+                    icon: const Icon(Icons.logout, color: Colors.red),
+                    label: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontFamily: 'Inter Bold',
+                        color: Colors.red,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

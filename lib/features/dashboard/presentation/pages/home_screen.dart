@@ -92,102 +92,136 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F1EA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              HomeTopBar(
-                initials: initials,
-                profilePictureUrl: profilePictureUrl,
-                unreadCount: unreadNotificationCount,
-                onTapNotifications: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationCenterScreen(),
-                    ),
-                  );
-                },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isTablet = constraints.maxWidth >= 900;
+            final horizontalPadding = isTablet ? 20.0 : 16.0;
+
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 980),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    12,
+                    horizontalPadding,
+                    24,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeTopBar(
+                        initials: initials,
+                        profilePictureUrl: profilePictureUrl,
+                        unreadCount: unreadNotificationCount,
+                        onTapNotifications: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const NotificationCenterScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      HomeGreetingCard(
+                        headerDate: headerDate,
+                        greeting: greeting,
+                        userName: userName,
+                        onTapLogMood: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MoodScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      HomeSectionHeader(
+                        title: 'Weekly Mood',
+                        onSeeMore: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MoodScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      HomeWeeklyMoodSection(
+                        overview: moodState.overview,
+                        isLoading: moodIsLoading,
+                        onTapLogMood: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MoodScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      HomeSectionHeader(
+                        title: 'Reminders',
+                        onSeeMore: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const RemindersScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      HomeRemindersSection(
+                        isLoading: remindersIsLoading,
+                        reminders: reminderState.reminders,
+                        notifications: reminderNotificationsState.notifications,
+                        onTapReminders: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const RemindersScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      HomeQuickActionsSection(
+                        onTapJournal: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const JournalScreen(),
+                            ),
+                          );
+                        },
+                        onTapExercises: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ExerciseScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      HomeSectionHeader(
+                        title: 'Events',
+                        onSeeMore: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CalendarScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      HomeEventsSection(
+                        isLoading: eventsIsLoading,
+                        schedules: scheduleState.schedules,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 14),
-              HomeGreetingCard(
-                headerDate: headerDate,
-                greeting: greeting,
-                userName: userName,
-                onTapLogMood: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => const MoodScreen()));
-                },
-              ),
-              const SizedBox(height: 18),
-              HomeSectionHeader(
-                title: 'Weekly Mood',
-                onSeeMore: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => const MoodScreen()));
-                },
-              ),
-              const SizedBox(height: 10),
-              HomeWeeklyMoodSection(
-                overview: moodState.overview,
-                isLoading: moodIsLoading,
-                onTapLogMood: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => const MoodScreen()));
-                },
-              ),
-              const SizedBox(height: 18),
-              HomeSectionHeader(
-                title: 'Reminders',
-                onSeeMore: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RemindersScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              HomeRemindersSection(
-                isLoading: remindersIsLoading,
-                reminders: reminderState.reminders,
-                notifications: reminderNotificationsState.notifications,
-                onTapReminders: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RemindersScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 18),
-              HomeQuickActionsSection(
-                onTapJournal: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const JournalScreen()),
-                  );
-                },
-                onTapExercises: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ExerciseScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 18),
-              HomeSectionHeader(
-                title: 'Events',
-                onSeeMore: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CalendarScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              HomeEventsSection(
-                isLoading: eventsIsLoading,
-                schedules: scheduleState.schedules,
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

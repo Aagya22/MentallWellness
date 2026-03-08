@@ -6,6 +6,7 @@ enum AdminUsersStatus { initial, loading, loaded, deleting, error }
 class AdminUsersState extends Equatable {
   final AdminUsersStatus status;
   final List<AdminUserModel> users;
+  final bool isLoadingMore;
   final int page;
   final int limit;
   final int total;
@@ -16,6 +17,7 @@ class AdminUsersState extends Equatable {
   const AdminUsersState({
     this.status = AdminUsersStatus.initial,
     this.users = const [],
+    this.isLoadingMore = false,
     this.page = 1,
     this.limit = 10,
     this.total = 0,
@@ -27,6 +29,7 @@ class AdminUsersState extends Equatable {
   AdminUsersState copyWith({
     AdminUsersStatus? status,
     List<AdminUserModel>? users,
+    bool? isLoadingMore,
     int? page,
     int? limit,
     int? total,
@@ -37,6 +40,7 @@ class AdminUsersState extends Equatable {
     return AdminUsersState(
       status: status ?? this.status,
       users: users ?? this.users,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       page: page ?? this.page,
       limit: limit ?? this.limit,
       total: total ?? this.total,
@@ -50,6 +54,7 @@ class AdminUsersState extends Equatable {
   List<Object?> get props => [
     status,
     users,
+    isLoadingMore,
     page,
     limit,
     total,

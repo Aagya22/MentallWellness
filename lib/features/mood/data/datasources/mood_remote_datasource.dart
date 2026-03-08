@@ -17,7 +17,9 @@ class MoodRemoteDatasource {
   Future<MoodOverviewApiModel> getOverview() async {
     final res = await _apiClient.get(ApiEndpoints.moodsOverview);
     if (res.data['success'] == true) {
-      return MoodOverviewApiModel.fromJson(res.data['data'] as Map<String, dynamic>);
+      return MoodOverviewApiModel.fromJson(
+        res.data['data'] as Map<String, dynamic>,
+      );
     }
     throw Exception(res.data['message'] ?? 'Failed to fetch mood overview');
   }
@@ -43,7 +45,8 @@ class MoodRemoteDatasource {
       ApiEndpoints.moods,
       data: {
         'mood': mood,
-        if (moodType != null && moodType.trim().isNotEmpty) 'moodType': moodType.trim(),
+        if (moodType != null && moodType.trim().isNotEmpty)
+          'moodType': moodType.trim(),
         if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
         if (date != null) 'date': date.toIso8601String(),
       },
@@ -73,5 +76,15 @@ class MoodRemoteDatasource {
     }
 
     throw Exception(res.data['message'] ?? 'Failed to fetch moods');
+  }
+
+  Future<void> deleteMood({required String id}) async {
+    final res = await _apiClient.delete('${ApiEndpoints.moods}/$id');
+
+    if (res.data['success'] == true) {
+      return;
+    }
+
+    throw Exception(res.data['message'] ?? 'Failed to delete mood');
   }
 }

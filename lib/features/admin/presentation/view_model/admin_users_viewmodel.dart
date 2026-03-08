@@ -19,18 +19,39 @@ class AdminUsersViewModel extends Notifier<AdminUsersState> {
     return const AdminUsersState();
   }
 
-  Future<void> fetchUsers({int? page, int? limit, String? search}) async {
+  Future<void> fetchUsers({
+    int? page,
+    int? limit,
+    String? search,
+    bool append = false,
+  }) async {
     final nextPage = page ?? state.page;
     final nextLimit = limit ?? state.limit;
     final nextSearch = search ?? state.search;
 
-    state = state.copyWith(
-      status: AdminUsersStatus.loading,
-      page: nextPage,
-      limit: nextLimit,
-      search: nextSearch,
-      errorMessage: null,
-    );
+    if (append) {
+      if (state.isLoadingMore) return;
+
+      final endReached = state.totalPages > 0 && nextPage > state.totalPages;
+      if (endReached) return;
+
+      state = state.copyWith(
+        page: nextPage,
+        limit: nextLimit,
+        search: nextSearch,
+        isLoadingMore: true,
+        errorMessage: null,
+      );
+    } else {
+      state = state.copyWith(
+        status: AdminUsersStatus.loading,
+        page: nextPage,
+        limit: nextLimit,
+        search: nextSearch,
+        isLoadingMore: false,
+        errorMessage: null,
+      );
+    }
 
     try {
       final res = await _apiClient.get(
@@ -53,7 +74,7 @@ class AdminUsersViewModel extends Notifier<AdminUsersState> {
           .map(AdminUserModel.fromJson)
           .toList(growable: false);
 
-      final pagination = (data['pagination'] as Map<String, dynamic>?);
+      final pagination = data['pagination'] as Map<String, dynamic>?;
       final total = (pagination?['total'] is int)
           ? pagination!['total'] as int
           : users.length;
@@ -61,24 +82,94 @@ class AdminUsersViewModel extends Notifier<AdminUsersState> {
           ? pagination!['totalPages'] as int
           : (total == 0 ? 0 : ((total + nextLimit - 1) ~/ nextLimit));
 
-      state = state.copyWith(
-        status: AdminUsersStatus.loaded,
-        users: users,
-        total: total,
-        totalPages: totalPages,
-      );
+      if (append) {
+        final merged = <AdminUserModel>[...state.users];
+        final seenIds = merged.map((e) => e.id).toSet();
+
+        for (final user in users) {
+          if (seenIds.add(user.id)) {
+            merged.add(user);
+          }
+        }
+
+        state = state.copyWith(
+          status: AdminUsersStatus.loaded,
+          users: merged,
+          page: nextPage,
+          limit: nextLimit,
+          search: nextSearch,
+          total: total,
+          totalPages: totalPages,
+          isLoadingMore: false,
+          errorMessage: null,
+        );
+      } else {
+        state = state.copyWith(
+          status: AdminUsersStatus.loaded,
+          users: users,
+          page: nextPage,
+          limit: nextLimit,
+          search: nextSearch,
+          total: total,
+          totalPages: totalPages,
+          isLoadingMore: false,
+          errorMessage: null,
+        );
+      }
     } on DioException catch (e) {
       final message = e.response?.data is Map<String, dynamic>
           ? (e.response?.data['message']?.toString() ?? e.message)
           : (e.message ?? 'Network error');
+
+      final hasExistingList = state.users.isNotEmpty;
       state = state.copyWith(
-        status: AdminUsersStatus.error,
+        status: hasExistingList
+            ? AdminUsersStatus.loaded
+            : AdminUsersStatus.error,
         errorMessage: message,
+        isLoadingMore: false,
       );
     } catch (e) {
+      final hasExistingList = state.users.isNotEmpty;
       state = state.copyWith(
-        status: AdminUsersStatus.error,
+        status: hasExistingList
+            ? AdminUsersStatus.loaded
+            : AdminUsersStatus.error,
         errorMessage: e.toString(),
+        isLoadingMore: false,
+      );
+    }
+  }
+
+  Future<void> loadMoreUsers() async {
+    if (state.status == AdminUsersStatus.loading || state.isLoadingMore) return;
+    if (state.totalPages > 0 && state.page >= state.totalPages) return;
+
+    await fetchUsers(
+      page: state.page + 1,
+      limit: state.limit,
+      search: state.search,
+      append: true,
+    );
+  }
+
+  Future<void> refreshLoadedPages({
+    int? loadedPages,
+    int? limit,
+    String? search,
+  }) async {
+    final pagesToLoad = (loadedPages ?? state.page).clamp(1, 999999);
+    final nextLimit = limit ?? state.limit;
+    final nextSearch = search ?? state.search;
+
+    await fetchUsers(page: 1, limit: nextLimit, search: nextSearch);
+
+    for (var page = 2; page <= pagesToLoad; page++) {
+      await fetchUsers(
+        page: page,
+        limit: nextLimit,
+        search: nextSearch,
+        append: true,
       );
     }
   }
@@ -90,6 +181,7 @@ class AdminUsersViewModel extends Notifier<AdminUsersState> {
       status: AdminUsersStatus.deleting,
       errorMessage: null,
     );
+
     try {
       final res = await _apiClient.delete('${ApiEndpoints.adminUsers}/$userId');
       final data = res.data as Map<String, dynamic>;
@@ -99,7 +191,6 @@ class AdminUsersViewModel extends Notifier<AdminUsersState> {
         );
       }
 
-      // Refresh current page.
       await fetchUsers(
         page: state.page,
         limit: state.limit,

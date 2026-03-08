@@ -26,6 +26,12 @@ class AdminUserModel {
       created = DateTime.tryParse(createdRaw);
     }
 
+    final rawImage =
+        json['imageUrl'] ?? json['profilePicture'] ?? json['profileImage'];
+    final parsedImageUrl = rawImage is String && rawImage.trim().isNotEmpty
+        ? rawImage
+        : null;
+
     return AdminUserModel(
       id: (json['_id'] ?? json['id'] ?? '') as String,
       fullName: (json['fullName'] ?? '') as String,
@@ -33,7 +39,7 @@ class AdminUserModel {
       username: (json['username'] ?? '') as String,
       phoneNumber: (json['phoneNumber'] ?? '') as String,
       role: (json['role'] ?? 'user') as String,
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: parsedImageUrl,
       createdAt: created,
     );
   }

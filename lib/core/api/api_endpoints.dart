@@ -25,6 +25,10 @@ class ApiEndpoints {
   static const String userUpdateProfile = '/api/auth/update-profile';
   static const String userWhoAmI = '/api/auth/whoami';
   static const String changePassword = '/api/auth/change-password';
+  static const String requestPasswordReset = '/api/auth/request-password-reset';
+
+  static String resetPassword(String token) =>
+      '/api/auth/reset-password/$token';
 
   // Journal passcode
   static const String journalPasscode = '/api/auth/journal-passcode';
@@ -33,6 +37,12 @@ class ApiEndpoints {
 
   // Admin
   static const String adminUsers = '/api/admin/users';
+  static const String adminNotifications = '/api/admin/notifications';
+  static const String adminNotificationsReadAll =
+      '/api/admin/notifications/read-all';
+
+  static String adminNotificationMarkRead(String id) =>
+      '/api/admin/notifications/$id/read';
 
   // Journals
   static const String journals = '/api/journals';

@@ -211,4 +211,47 @@ class AuthRemoteDatasource implements IAuthRemoteDataSource {
       );
     }
   }
+
+  Future<String> requestPasswordReset({required String email}) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.requestPasswordReset,
+        data: {'email': email},
+      );
+
+      return _extractMessage(
+        response.data,
+        fallback: 'If the email is registered, a reset link has been sent.',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractMessage(
+          e.response?.data,
+          fallback: 'Failed to request password reset',
+        ),
+      );
+    }
+  }
+
+  Future<String> resetPasswordWithCode({
+    required String token,
+    required String resetCode,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.resetPassword(token),
+        data: {'resetCode': resetCode, 'newPassword': newPassword},
+      );
+
+      return _extractMessage(
+        response.data,
+        fallback: 'Password has been reset successfully.',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        _extractMessage(e.response?.data, fallback: 'Failed to reset password'),
+      );
+    }
+  }
 }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_dashboard_tab.dart';
+import 'package:mentalwellness/features/admin/presentation/pages/admin_notification_center_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_settings_tab.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_users_tab.dart';
+import 'package:mentalwellness/features/admin/presentation/view_model/admin_notifications_viewmodel.dart';
 import 'package:mentalwellness/features/admin/presentation/view_model/admin_users_viewmodel.dart';
 
 const kAdminPrimary = Color(0xFF4F46E5);
@@ -23,7 +24,29 @@ class _AdminBottomNavigationScreenState
     extends ConsumerState<AdminBottomNavigationScreen> {
   int _selectedIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref
+          .read(adminNotificationsViewModelProvider.notifier)
+          .fetchNotifications(limit: 50);
+    });
+  }
+
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
+
+  Future<void> _openAdminNotifications() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AdminNotificationCenterScreen()),
+    );
+
+    if (!mounted) return;
+
+    await ref
+        .read(adminNotificationsViewModelProvider.notifier)
+        .fetchNotifications(limit: 50);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +92,9 @@ class _AdminBottomNavigationScreenState
                 ref
                     .read(adminUsersViewModelProvider.notifier)
                     .fetchUsers(page: 1);
+                ref
+                    .read(adminNotificationsViewModelProvider.notifier)
+                    .fetchNotifications(limit: 50);
               },
               child: const Icon(Icons.person_add_alt_1_rounded),
             )
@@ -79,16 +105,10 @@ class _AdminBottomNavigationScreenState
 
   PreferredSizeWidget _buildAppBar(String tabTitle) {
     final session = ref.read(userSessionServiceProvider);
-    final adminName = session.getCurrentUserFullName() ?? 'Administrator';
-    final adminPic = session.getCurrentUserProfilePicture();
-    final initial = adminName.isNotEmpty
-        ? adminName.substring(0, 1).toUpperCase()
-        : 'A';
+    final notificationsState = ref.watch(adminNotificationsViewModelProvider);
+    final unreadCount = notificationsState.unreadCount;
 
-    ImageProvider? avatarImage;
-    if (adminPic != null && adminPic.isNotEmpty) {
-      avatarImage = NetworkImage(ApiEndpoints.getImageUrl(adminPic));
-    }
+    final adminName = session.getCurrentUserFullName() ?? 'Administrator';
 
     return PreferredSize(
       preferredSize: const Size.fromHeight(90),
@@ -112,34 +132,43 @@ class _AdminBottomNavigationScreenState
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                // Profile picture avatar
                 Container(
-                  width: 48,
-                  height: 48,
+                  height: 52,
+                  width: 52,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    gradient: avatarImage == null
-                        ? const LinearGradient(
-                            colors: [Color(0xFF818CF8), Color(0xFFA78BFA)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFD8E3DD),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  child: ClipOval(
-                    child: avatarImage != null
-                        ? Image(image: avatarImage, fit: BoxFit.cover)
-                        : Center(
-                            child: Text(
-                              initial,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 3,
+                    ),
+                    child: Center(
+                      child: Transform.scale(
+                        scale: 1.3,
+                        child: Image.asset(
+                          'assets/images/novacane.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.spa_outlined,
+                            color: Color(0xFF4F46E5),
                           ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -169,6 +198,11 @@ class _AdminBottomNavigationScreenState
                     ],
                   ),
                 ),
+                _notificationAction(
+                  unreadCount: unreadCount,
+                  onTap: _openAdminNotifications,
+                ),
+                if (_selectedIndex == 1) const SizedBox(width: 8),
                 if (_selectedIndex == 1)
                   _headerAction(
                     icon: Icons.refresh_rounded,
@@ -177,8 +211,8 @@ class _AdminBottomNavigationScreenState
                       final s = ref.read(adminUsersViewModelProvider);
                       ref
                           .read(adminUsersViewModelProvider.notifier)
-                          .fetchUsers(
-                            page: s.page,
+                          .refreshLoadedPages(
+                            loadedPages: s.page,
                             limit: s.limit,
                             search: s.search,
                           );
@@ -186,6 +220,65 @@ class _AdminBottomNavigationScreenState
                   ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _notificationAction({
+    required int unreadCount,
+    required VoidCallback onTap,
+  }) {
+    final label = unreadCount > 99 ? '99+' : unreadCount.toString();
+
+    return Tooltip(
+      message: 'Notifications',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: -7,
+                  top: -7,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        height: 1.05,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

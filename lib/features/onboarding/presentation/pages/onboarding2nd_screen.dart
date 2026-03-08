@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mentalwellness/features/landing/presentation/pages/Landing_screen.dart';
 
-
 class Onboarding2ndScreen extends StatelessWidget {
   const Onboarding2ndScreen({super.key});
 
@@ -14,34 +13,51 @@ class Onboarding2ndScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: SizedBox(
-                  height: 40,
-                  child: ElevatedButton(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LandingScreen()),
-                      );
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/OnboardingfirstScreen',
+                        );
+                      }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+                  SizedBox(
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LandingScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
                       ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'SKIP',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                      child: const Text(
+                        'SKIP',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 10),
               Row(
@@ -80,7 +96,7 @@ class Onboarding2ndScreen extends StatelessWidget {
                 flex: 3,
                 child: Center(
                   child: Image.asset(
-                    "assets/images/meditate.jpg",
+                    "assets/images/meddd.png",
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -91,7 +107,7 @@ class Onboarding2ndScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
-                  
+
                   color: Colors.brown,
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mentalwellness/core/api/api_endpoints.dart';
 import 'package:mentalwellness/core/services/storage/user_session_service.dart';
 import 'package:mentalwellness/features/admin/presentation/pages/admin_bottom_navigation_screen.dart';
 import 'package:mentalwellness/features/admin/presentation/state/admin_dashboard_state.dart';
@@ -28,7 +29,42 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
     final session = ref.read(userSessionServiceProvider);
     final fullName = session.getCurrentUserFullName() ?? 'Admin';
     final email = session.getCurrentUserEmail() ?? '';
+    final profilePicturePath = session.getCurrentUserProfilePicture();
+    final profilePictureUrl =
+        (profilePicturePath != null && profilePicturePath.isNotEmpty)
+        ? ApiEndpoints.getImageUrl(profilePicturePath)
+        : null;
     final state = ref.watch(adminDashboardViewModelProvider);
+    final statCards = <Widget>[
+      _StatCard(
+        label: 'Total Users',
+        value: state.totalUsers,
+        icon: Icons.people_alt_rounded,
+        accent: const Color(0xFF3B82F6),
+        bgAccent: const Color(0xFFEFF6FF),
+      ),
+      _StatCard(
+        label: 'Regular Users',
+        value: state.regularUsers,
+        icon: Icons.person_rounded,
+        accent: const Color(0xFF10B981),
+        bgAccent: const Color(0xFFECFDF5),
+      ),
+      _StatCard(
+        label: 'Administrators',
+        value: state.totalAdmins,
+        icon: Icons.admin_panel_settings_rounded,
+        accent: kAdminSecondary,
+        bgAccent: const Color(0xFFF5F3FF),
+      ),
+      _StatCard(
+        label: 'New (30 days)',
+        value: state.recentUsers30Days,
+        icon: Icons.trending_up_rounded,
+        accent: const Color(0xFFF59E0B),
+        bgAccent: const Color(0xFFFFFBEB),
+      ),
+    ];
 
     if (state.status == AdminDashboardStatus.error) {
       return _ErrorView(
@@ -46,7 +82,11 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
         children: [
           // ── Hero welcome card ──────────────────────────────────────────
-          _WelcomeCard(fullName: fullName, email: email),
+          _WelcomeCard(
+            fullName: fullName,
+            email: email,
+            profilePictureUrl: profilePictureUrl,
+          ),
           const SizedBox(height: 20),
 
           // ── Loading shimmer ────────────────────────────────────────────
@@ -59,43 +99,29 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
           // ── Stats grid ────────────────────────────────────────────────
           _SectionLabel(label: 'Overview'),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.55,
-            children: [
-              _StatCard(
-                label: 'Total Users',
-                value: state.totalUsers,
-                icon: Icons.people_alt_rounded,
-                accent: const Color(0xFF3B82F6),
-                bgAccent: const Color(0xFFEFF6FF),
-              ),
-              _StatCard(
-                label: 'Regular Users',
-                value: state.regularUsers,
-                icon: Icons.person_rounded,
-                accent: const Color(0xFF10B981),
-                bgAccent: const Color(0xFFECFDF5),
-              ),
-              _StatCard(
-                label: 'Administrators',
-                value: state.totalAdmins,
-                icon: Icons.admin_panel_settings_rounded,
-                accent: kAdminSecondary,
-                bgAccent: const Color(0xFFF5F3FF),
-              ),
-              _StatCard(
-                label: 'New (30 days)',
-                value: state.recentUsers30Days,
-                icon: Icons.trending_up_rounded,
-                accent: const Color(0xFFF59E0B),
-                bgAccent: const Color(0xFFFFFBEB),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final crossAxisCount = width >= 1200
+                  ? 4
+                  : width >= 820
+                  ? 3
+                  : 2;
+              final tileHeight = width >= 1200 ? 150.0 : 144.0;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: statCards.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  mainAxisExtent: tileHeight,
+                ),
+                itemBuilder: (context, index) => statCards[index],
+              );
+            },
           ),
           const SizedBox(height: 24),
 
@@ -179,11 +205,24 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
 class _WelcomeCard extends StatelessWidget {
   final String fullName;
   final String email;
+  final String? profilePictureUrl;
 
-  const _WelcomeCard({required this.fullName, required this.email});
+  const _WelcomeCard({
+    required this.fullName,
+    required this.email,
+    this.profilePictureUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final initial = fullName.isNotEmpty
+        ? fullName.substring(0, 1).toUpperCase()
+        : 'A';
+    final avatarImage =
+        profilePictureUrl != null && profilePictureUrl!.isNotEmpty
+        ? NetworkImage(profilePictureUrl!)
+        : null;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -215,15 +254,19 @@ class _WelcomeCard extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: Text(
-              fullName.isNotEmpty
-                  ? fullName.substring(0, 1).toUpperCase()
-                  : 'A',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+            child: ClipOval(
+              child: avatarImage != null
+                  ? Image(image: avatarImage, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 14),
@@ -271,11 +314,6 @@ class _WelcomeCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const Icon(
-            Icons.verified_user_rounded,
-            color: Colors.white54,
-            size: 36,
           ),
         ],
       ),
