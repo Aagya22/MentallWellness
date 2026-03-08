@@ -158,74 +158,90 @@ class _MoodScreenState extends ConsumerState<MoodScreen> {
           ),
         ),
         body: SafeArea(
-          child: Builder(
-            builder: (context) {
-              if (state.status == MoodStatus.loading &&
-                  state.overview == null &&
-                  state.moods.isEmpty) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2D5A44)),
-                );
-              }
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isTablet = constraints.maxWidth >= 900;
 
-              return TabBarView(
-                children: [
-                  MoodLogTab(
-                    state: state,
-                    onRefresh: notifier.refresh,
-                    selectedLabel: _selectedMoodLabel,
-                    selectedScore: _selectedMoodScore,
-                    onSelect: (label, score) {
-                      setState(() {
-                        _selectedMoodLabel = label;
-                        _selectedMoodScore = score;
-                      });
-                    },
-                    noteController: _noteController,
-                    onSave: () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      final label = _selectedMoodLabel;
-                      final score = _selectedMoodScore;
-                      if (label == null ||
-                          label.trim().isEmpty ||
-                          score == null) {
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Pick how you feel first.'),
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isTablet ? 980 : double.infinity,
+                  ),
+                  child: Builder(
+                    builder: (context) {
+                      if (state.status == MoodStatus.loading &&
+                          state.overview == null &&
+                          state.moods.isEmpty) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF2D5A44),
                           ),
                         );
-                        return;
                       }
 
-                      final ok = await notifier.logMood(
-                        mood: score.clamp(1, 10),
-                        moodType: label,
-                        note: _noteController.text,
-                        date: DateTime.now(),
-                      );
-                      if (!ok || !mounted) return;
-                      _noteController.clear();
-                      messenger.showSnackBar(
-                        const SnackBar(content: Text('Mood saved')),
+                      return TabBarView(
+                        children: [
+                          MoodLogTab(
+                            state: state,
+                            onRefresh: notifier.refresh,
+                            selectedLabel: _selectedMoodLabel,
+                            selectedScore: _selectedMoodScore,
+                            onSelect: (label, score) {
+                              setState(() {
+                                _selectedMoodLabel = label;
+                                _selectedMoodScore = score;
+                              });
+                            },
+                            noteController: _noteController,
+                            onSave: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final label = _selectedMoodLabel;
+                              final score = _selectedMoodScore;
+                              if (label == null ||
+                                  label.trim().isEmpty ||
+                                  score == null) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Pick how you feel first.'),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final ok = await notifier.logMood(
+                                mood: score.clamp(1, 10),
+                                moodType: label,
+                                note: _noteController.text,
+                                date: DateTime.now(),
+                              );
+                              if (!ok || !mounted) return;
+                              _noteController.clear();
+                              messenger.showSnackBar(
+                                const SnackBar(content: Text('Mood saved')),
+                              );
+                            },
+                          ),
+                          MoodOverviewTab(
+                            overview: state.overview,
+                            onRefresh: notifier.refresh,
+                          ),
+                          MoodHistoryTab(
+                            state: state,
+                            onRefresh: notifier.refresh,
+                            onDelete: (entry) async {
+                              if (state.status == MoodStatus.saving) return;
+                              await _confirmDeleteMood(
+                                entry: entry,
+                                notifier: notifier,
+                              );
+                            },
+                          ),
+                        ],
                       );
                     },
                   ),
-                  MoodOverviewTab(
-                    overview: state.overview,
-                    onRefresh: notifier.refresh,
-                  ),
-                  MoodHistoryTab(
-                    state: state,
-                    onRefresh: notifier.refresh,
-                    onDelete: (entry) async {
-                      if (state.status == MoodStatus.saving) return;
-                      await _confirmDeleteMood(
-                        entry: entry,
-                        notifier: notifier,
-                      );
-                    },
-                  ),
-                ],
+                ),
               );
             },
           ),

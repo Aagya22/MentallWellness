@@ -21,9 +21,12 @@ void main() async {
   );
   // Initialize Hive Service
   final hiveService = HiveService();
-  await hiveService.init();
+  final hiveInitFuture = hiveService.init();
   // 5. Initialize SharedPreferences instance
-  final sharedPreferences = await SharedPreferences.getInstance();
+  final sharedPreferencesFuture = SharedPreferences.getInstance();
+
+  await hiveInitFuture;
+  final sharedPreferences = await sharedPreferencesFuture;
 
   runApp(
     ProviderScope(

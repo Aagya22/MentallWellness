@@ -50,7 +50,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   String _dateKey(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
-  ({DateTime from, DateTime to, String fromKey, String toKey}) _monthRange(DateTime month) {
+  ({DateTime from, DateTime to, String fromKey, String toKey}) _monthRange(
+    DateTime month,
+  ) {
     final from = DateTime(month.year, month.month, 1);
     // Fetch a little ahead so the Upcoming list can show next month too.
     final to = DateTime(month.year, month.month + 2, 0);
@@ -65,10 +67,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       _moodError = null;
     });
 
-    final scheduleFuture = ref.read(scheduleViewModelProvider.notifier).fetchForRange(
-          from: range.from,
-          to: range.to,
-        );
+    final scheduleFuture = ref
+        .read(scheduleViewModelProvider.notifier)
+        .fetchForRange(from: range.from, to: range.to);
 
     final moodsFuture = _loadMoods(from: range.fromKey, to: range.toKey);
 
@@ -116,7 +117,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (picked == null) return;
 
     final newMonth = DateTime(picked.year, picked.month, 1);
-    final monthChanged = newMonth.year != _currentMonth.year || newMonth.month != _currentMonth.month;
+    final monthChanged =
+        newMonth.year != _currentMonth.year ||
+        newMonth.month != _currentMonth.month;
 
     setState(() {
       _selectedDay = DateTime(picked.year, picked.month, picked.day);
@@ -146,7 +149,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     await _loadMonth();
   }
 
-  Map<String, List<ScheduleEntity>> _groupByDay(List<ScheduleEntity> schedules) {
+  Map<String, List<ScheduleEntity>> _groupByDay(
+    List<ScheduleEntity> schedules,
+  ) {
     final map = <String, List<ScheduleEntity>>{};
     for (final s in schedules) {
       map.putIfAbsent(s.date, () => []).add(s);
@@ -183,7 +188,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return upcoming.map((e) => e.s).toList();
   }
 
-  Future<void> _openDayDetails(DateTime day, Map<String, List<ScheduleEntity>> byDay) async {
+  Future<void> _openDayDetails(
+    DateTime day,
+    Map<String, List<ScheduleEntity>> byDay,
+  ) async {
     final key = _dateKey(day);
     final mood = _moodsByDay[key];
 
@@ -203,6 +211,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final scheduleState = ref.watch(scheduleViewModelProvider);
     final dfMonth = DateFormat('MMMM yyyy');
+    final isWideScreen = MediaQuery.of(context).size.width >= 900;
 
     final byDay = _groupByDay(scheduleState.schedules);
     final upcoming = _upcomingSchedules(scheduleState.schedules);
@@ -260,200 +269,210 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               backgroundColor: Color(0xFFEAF1ED),
             ),
           Expanded(
-            child: CustomScrollView(
-              slivers: [
-                // ── Month navigation header ──────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                    child: Row(
-                      children: [
-                        _NavArrow(
-                          icon: Icons.chevron_left_rounded,
-                          onTap: _prevMonth,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWideScreen ? 920 : double.infinity,
+                ),
+                child: CustomScrollView(
+                  slivers: [
+                    // ── Month navigation header ──────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                        child: Row(
+                          children: [
+                            _NavArrow(
+                              icon: Icons.chevron_left_rounded,
+                              onTap: _prevMonth,
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    dfMonth.format(_currentMonth),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter Bold',
+                                      fontSize: 18,
+                                      color: Color(0xFF1F2A22),
+                                    ),
+                                  ),
+                                  if (_isMoodLoading)
+                                    const SizedBox(
+                                      height: 14,
+                                      width: 14,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(top: 3),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          color: Color(0xFF2D5A44),
+                                        ),
+                                      ),
+                                    )
+                                  else if (_moodError != null)
+                                    Text(
+                                      _moodError!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter Medium',
+                                        fontSize: 10,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            _NavArrow(
+                              icon: Icons.chevron_right_rounded,
+                              onTap: _nextMonth,
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: Column(
+                      ),
+                    ),
+                    // ── Weekday row ──────────────────────────────────────
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          children: [
+                            _WeekdayLabel('S', isSunday: true),
+                            _WeekdayLabel('M'),
+                            _WeekdayLabel('T'),
+                            _WeekdayLabel('W'),
+                            _WeekdayLabel('T'),
+                            _WeekdayLabel('F'),
+                            _WeekdayLabel('S', isSunday: true),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // ── Month grid ───────────────────────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+                        child: _MonthGrid(
+                          month: _currentMonth,
+                          selectedDay: _selectedDay,
+                          schedulesByDay: byDay,
+                          moodsByDay: _moodsByDay,
+                          onSelectDay: (d) async {
+                            setState(() => _selectedDay = d);
+                            await _openDayDetails(d, byDay);
+                          },
+                        ),
+                      ),
+                    ),
+                    if (scheduleState.status == ScheduleStatus.loading ||
+                        scheduleState.status == ScheduleStatus.initial)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 18),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      )
+                    else if (scheduleState.status == ScheduleStatus.error)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            scheduleState.errorMessage ??
+                                'Failed to load schedules',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontFamily: 'Inter Medium'),
+                          ),
+                        ),
+                      )
+                    // ── Upcoming events ──────────────────────────────
+                    else ...[
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                          child: Row(
                             children: [
-                              Text(
-                                dfMonth.format(_currentMonth),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
+                              Container(
+                                width: 4,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2D5A44),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Upcoming events',
+                                style: TextStyle(
                                   fontFamily: 'Inter Bold',
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   color: Color(0xFF1F2A22),
                                 ),
                               ),
-                              if (_isMoodLoading)
-                                const SizedBox(
-                                  height: 14,
-                                  width: 14,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(top: 3),
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.5,
-                                      color: Color(0xFF2D5A44),
+                              const Spacer(),
+                              Text(
+                                '${upcoming.length}',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter Bold',
+                                  fontSize: 13,
+                                  color: Color(0xFF2D5A44),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (upcoming.isEmpty)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(16, 10, 16, 40),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.event_available_outlined,
+                                    size: 36,
+                                    color: Color(0xFFB0C4BB),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'No upcoming events',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter Medium',
+                                      fontSize: 14,
+                                      color: Color(0xFF5A6B60),
                                     ),
                                   ),
-                                )
-                              else if (_moodError != null)
-                                Text(
-                                  _moodError!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: 'Inter Medium',
-                                    fontSize: 10,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        _NavArrow(
-                          icon: Icons.chevron_right_rounded,
-                          onTap: _nextMonth,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // ── Weekday row ──────────────────────────────────────
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        _WeekdayLabel('S', isSunday: true),
-                        _WeekdayLabel('M'),
-                        _WeekdayLabel('T'),
-                        _WeekdayLabel('W'),
-                        _WeekdayLabel('T'),
-                        _WeekdayLabel('F'),
-                        _WeekdayLabel('S', isSunday: true),
-                      ],
-                    ),
-                  ),
-                ),
-                // ── Month grid ───────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-                    child: _MonthGrid(
-                      month: _currentMonth,
-                      selectedDay: _selectedDay,
-                      schedulesByDay: byDay,
-                      moodsByDay: _moodsByDay,
-                      onSelectDay: (d) async {
-                        setState(() => _selectedDay = d);
-                        await _openDayDetails(d, byDay);
-                      },
-                    ),
-                  ),
-                ),
-                if (scheduleState.status == ScheduleStatus.loading ||
-                    scheduleState.status == ScheduleStatus.initial)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 18),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  )
-                else if (scheduleState.status == ScheduleStatus.error)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        scheduleState.errorMessage ?? 'Failed to load schedules',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontFamily: 'Inter Medium'),
-                      ),
-                    ),
-                  )
-                // ── Upcoming events ──────────────────────────────
-                else ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2D5A44),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Upcoming events',
-                            style: TextStyle(
-                              fontFamily: 'Inter Bold',
-                              fontSize: 16,
-                              color: Color(0xFF1F2A22),
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${upcoming.length}',
-                            style: const TextStyle(
-                              fontFamily: 'Inter Bold',
-                              fontSize: 13,
-                              color: Color(0xFF2D5A44),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (upcoming.isEmpty)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, 10, 16, 40),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.event_available_outlined,
-                                size: 36,
-                                color: Color(0xFFB0C4BB),
+                                ],
                               ),
-                              SizedBox(height: 8),
-                              Text(
-                                'No upcoming events',
-                                style: TextStyle(
-                                  fontFamily: 'Inter Medium',
-                                  fontSize: 14,
-                                  color: Color(0xFF5A6B60),
-                                ),
-                              ),
-                            ],
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final s = upcoming[index];
+                              final d =
+                                  DateTime.tryParse(s.date) ?? _selectedDay;
+                              final isFirst = index == 0;
+                              return _UpcomingScheduleTile(
+                                schedule: s,
+                                scheduleDay: d,
+                                isFirst: isFirst,
+                              );
+                            }, childCount: upcoming.length),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final s = upcoming[index];
-                            final d = DateTime.tryParse(s.date) ?? _selectedDay;
-                            final isFirst = index == 0;
-                            return _UpcomingScheduleTile(
-                              schedule: s,
-                              scheduleDay: d,
-                              isFirst: isFirst,
-                            );
-                          },
-                          childCount: upcoming.length,
-                        ),
-                      ),
-                    ),
-                ],
-              ],
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -540,93 +559,110 @@ class _MonthGrid extends StatelessWidget {
 
     final today = DateTime.now();
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 0.86,
-      ),
-      itemCount: totalCells,
-      itemBuilder: (context, index) {
-        if (index < offset) {
-          return const SizedBox.shrink();
-        }
-        final day = index - offset + 1;
-        if (day > daysInMonth) {
-          return const SizedBox.shrink();
-        }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 8.0;
+        final cellWidth = (constraints.maxWidth - (spacing * 6)) / 7;
+        final targetCellHeight = cellWidth.clamp(48.0, 72.0);
+        final childAspectRatio = cellWidth / targetCellHeight;
 
-        final date = DateTime(month.year, month.month, day);
-        final key = _dateKey(date);
-
-        final isSelected = DateUtils.isSameDay(date, selectedDay);
-        final isToday = DateUtils.isSameDay(date, today);
-        final isSunday = date.weekday == DateTime.sunday;
-
-        final events = schedulesByDay[key] ?? const <ScheduleEntity>[];
-        final mood = moodsByDay[key];
-        final hasIndicator = events.isNotEmpty || mood != null;
-
-        // Today: filled dark-green cell. Selected (not today): outlined. Normal: white.
-        Color bg;
-        BoxBorder? border;
-        Color dayColor;
-
-        if (isToday) {
-          bg = const Color(0xFF2D5A44);
-          border = null;
-          dayColor = Colors.white;
-        } else if (isSelected) {
-          bg = const Color(0xFFEAF1ED);
-          border = Border.all(color: const Color(0xFF2D5A44), width: 1.5);
-          dayColor = const Color(0xFF2D5A44);
-        } else {
-          bg = Colors.white;
-          border = Border.all(color: const Color(0xFF1F2A22).withValues(alpha: 0.08));
-          dayColor = isSunday ? const Color(0xFFD96B6B) : const Color(0xFF1F2A22);
-        }
-
-        final dotColor = isToday ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF2D5A44);
-
-        return GestureDetector(
-          onTap: () => onSelectDay(date),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(12),
-              border: border,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$day',
-                  style: TextStyle(
-                    fontFamily: isToday || isSelected ? 'Inter Bold' : 'Inter Medium',
-                    fontSize: 13,
-                    color: dayColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                if (hasIndicator)
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: dotColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  )
-                else
-                  const SizedBox(height: 5),
-              ],
-            ),
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: childAspectRatio,
           ),
+          itemCount: totalCells,
+          itemBuilder: (context, index) {
+            if (index < offset) {
+              return const SizedBox.shrink();
+            }
+            final day = index - offset + 1;
+            if (day > daysInMonth) {
+              return const SizedBox.shrink();
+            }
+
+            final date = DateTime(month.year, month.month, day);
+            final key = _dateKey(date);
+
+            final isSelected = DateUtils.isSameDay(date, selectedDay);
+            final isToday = DateUtils.isSameDay(date, today);
+            final isSunday = date.weekday == DateTime.sunday;
+
+            final events = schedulesByDay[key] ?? const <ScheduleEntity>[];
+            final mood = moodsByDay[key];
+            final hasIndicator = events.isNotEmpty || mood != null;
+
+            // Today: filled dark-green cell. Selected (not today): outlined. Normal: white.
+            Color bg;
+            BoxBorder? border;
+            Color dayColor;
+
+            if (isToday) {
+              bg = const Color(0xFF2D5A44);
+              border = null;
+              dayColor = Colors.white;
+            } else if (isSelected) {
+              bg = const Color(0xFFEAF1ED);
+              border = Border.all(color: const Color(0xFF2D5A44), width: 1.5);
+              dayColor = const Color(0xFF2D5A44);
+            } else {
+              bg = Colors.white;
+              border = Border.all(
+                color: const Color(0xFF1F2A22).withValues(alpha: 0.08),
+              );
+              dayColor = isSunday
+                  ? const Color(0xFFD96B6B)
+                  : const Color(0xFF1F2A22);
+            }
+
+            final dotColor = isToday
+                ? Colors.white.withValues(alpha: 0.8)
+                : const Color(0xFF2D5A44);
+
+            return GestureDetector(
+              onTap: () => onSelectDay(date),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: border,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$day',
+                      style: TextStyle(
+                        fontFamily: isToday || isSelected
+                            ? 'Inter Bold'
+                            : 'Inter Medium',
+                        fontSize: 13,
+                        color: dayColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (hasIndicator)
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: dotColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      )
+                    else
+                      const SizedBox(height: 5),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -676,7 +712,11 @@ class _DayDetailsSheet extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ScheduleEntity schedule) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    ScheduleEntity schedule,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -698,10 +738,9 @@ class _DayDetailsSheet extends ConsumerWidget {
     );
     if (ok != true) return;
 
-    final success = await ref.read(scheduleViewModelProvider.notifier).deleteSchedule(
-          id: schedule.id,
-          dayToRefresh: day,
-        );
+    final success = await ref
+        .read(scheduleViewModelProvider.notifier)
+        .deleteSchedule(id: schedule.id, dayToRefresh: day);
     if (!context.mounted) return;
 
     if (success) {
@@ -711,7 +750,9 @@ class _DayDetailsSheet extends ConsumerWidget {
         color: const Color(0xFF2D5A44),
       );
     } else {
-      final msg = ref.read(scheduleViewModelProvider).errorMessage ?? 'Failed to delete event';
+      final msg =
+          ref.read(scheduleViewModelProvider).errorMessage ??
+          'Failed to delete event';
       showMySnackBar(context: context, message: msg, color: Colors.red);
     }
   }
@@ -727,7 +768,8 @@ class _DayDetailsSheet extends ConsumerWidget {
       byDay.putIfAbsent(s.date, () => []).add(s);
     }
     final key = _dateKey(day);
-    final daySchedules = (byDay[key] ?? schedules).toList()..sort((a, b) => a.time.compareTo(b.time));
+    final daySchedules = (byDay[key] ?? schedules).toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
 
     return Container(
       padding: EdgeInsets.fromLTRB(0, 0, 0, bottom),
@@ -794,7 +836,10 @@ class _DayDetailsSheet extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -824,28 +869,31 @@ class _DayDetailsSheet extends ConsumerWidget {
                     ),
                     const Spacer(),
                     if (mood != null) ...[
-                    Text(
-                      moodEmojiFor(moodType: mood!.moodType, score: mood!.mood),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _moodLabel(mood!),
-                      style: const TextStyle(
-                        fontFamily: 'Inter Medium',
-                        fontSize: 13,
-                        color: Color(0xFF1F2A22),
+                      Text(
+                        moodEmojiFor(
+                          moodType: mood!.moodType,
+                          score: mood!.mood,
+                        ),
+                        style: const TextStyle(fontSize: 18),
                       ),
-                    ),
-                  ] else
-                    const Text(
-                      'No mood logged',
-                      style: TextStyle(
-                        fontFamily: 'Inter Medium',
-                        fontSize: 13,
-                        color: Color(0xFF5A6B60),
+                      const SizedBox(width: 8),
+                      Text(
+                        _moodLabel(mood!),
+                        style: const TextStyle(
+                          fontFamily: 'Inter Medium',
+                          fontSize: 13,
+                          color: Color(0xFF1F2A22),
+                        ),
                       ),
-                    ),
+                    ] else
+                      const Text(
+                        'No mood logged',
+                        style: TextStyle(
+                          fontFamily: 'Inter Medium',
+                          fontSize: 13,
+                          color: Color(0xFF5A6B60),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -867,7 +915,10 @@ class _DayDetailsSheet extends ConsumerWidget {
                   GestureDetector(
                     onTap: () => _openAdd(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2D5A44),
                         borderRadius: BorderRadius.circular(20),
@@ -924,7 +975,8 @@ class _DayDetailsSheet extends ConsumerWidget {
                   shrinkWrap: true,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                   itemCount: daySchedules.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final s = daySchedules[index];
                     return Container(
@@ -967,10 +1019,15 @@ class _DayDetailsSheet extends ConsumerWidget {
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFEAF1ED),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: Text(
                                           s.time,
@@ -992,17 +1049,28 @@ class _DayDetailsSheet extends ConsumerWidget {
                                           }
                                         },
                                         itemBuilder: (context) => const [
-                                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                          PopupMenuItem(
+                                            value: 'edit',
+                                            child: Text('Edit'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'delete',
+                                            child: Text('Delete'),
+                                          ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                          if (s.location != null && s.location!.trim().isNotEmpty) ...[
+                                  if (s.location != null &&
+                                      s.location!.trim().isNotEmpty) ...[
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF5A6B60)),
+                                        const Icon(
+                                          Icons.location_on_outlined,
+                                          size: 12,
+                                          color: Color(0xFF5A6B60),
+                                        ),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
@@ -1017,7 +1085,8 @@ class _DayDetailsSheet extends ConsumerWidget {
                                       ],
                                     ),
                                   ],
-                                  if (s.description != null && s.description!.trim().isNotEmpty) ...[
+                                  if (s.description != null &&
+                                      s.description!.trim().isNotEmpty) ...[
                                     const SizedBox(height: 4),
                                     Text(
                                       s.description!.trim(),
@@ -1059,7 +1128,9 @@ class _UpcomingScheduleTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isToday = DateUtils.isSameDay(scheduleDay, DateTime.now());
-    final dateLabel = isToday ? 'Today' : DateFormat('EEE, MMM d').format(scheduleDay);
+    final dateLabel = isToday
+        ? 'Today'
+        : DateFormat('EEE, MMM d').format(scheduleDay);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -1073,7 +1144,9 @@ class _UpcomingScheduleTile extends ConsumerWidget {
                 width: 36,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 decoration: BoxDecoration(
-                  color: isToday ? const Color(0xFF2D5A44) : const Color(0xFFEAF1ED),
+                  color: isToday
+                      ? const Color(0xFF2D5A44)
+                      : const Color(0xFFEAF1ED),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -1095,7 +1168,9 @@ class _UpcomingScheduleTile extends ConsumerWidget {
                       style: TextStyle(
                         fontFamily: 'Inter Regular',
                         fontSize: 10,
-                        color: isToday ? Colors.white70 : const Color(0xFF5A6B60),
+                        color: isToday
+                            ? Colors.white70
+                            : const Color(0xFF5A6B60),
                       ),
                     ),
                   ],
@@ -1128,9 +1203,14 @@ class _UpcomingScheduleTile extends ConsumerWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
-                          color: isToday ? const Color(0xFF2D5A44) : const Color(0xFFEAF1ED),
+                          color: isToday
+                              ? const Color(0xFF2D5A44)
+                              : const Color(0xFFEAF1ED),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -1138,17 +1218,24 @@ class _UpcomingScheduleTile extends ConsumerWidget {
                           style: TextStyle(
                             fontFamily: 'Inter Medium',
                             fontSize: 11,
-                            color: isToday ? Colors.white : const Color(0xFF2D5A44),
+                            color: isToday
+                                ? Colors.white
+                                : const Color(0xFF2D5A44),
                           ),
                         ),
                       ),
                     ],
                   ),
-                          if (schedule.location != null && schedule.location!.trim().isNotEmpty) ...[
+                  if (schedule.location != null &&
+                      schedule.location!.trim().isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF5A6B60)),
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 12,
+                          color: Color(0xFF5A6B60),
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -1174,16 +1261,14 @@ class _UpcomingScheduleTile extends ConsumerWidget {
 }
 
 class _UpsertScheduleSheet extends ConsumerStatefulWidget {
-  const _UpsertScheduleSheet({
-    required this.initialDate,
-    this.existing,
-  });
+  const _UpsertScheduleSheet({required this.initialDate, this.existing});
 
   final DateTime initialDate;
   final ScheduleEntity? existing;
 
   @override
-  ConsumerState<_UpsertScheduleSheet> createState() => _UpsertScheduleSheetState();
+  ConsumerState<_UpsertScheduleSheet> createState() =>
+      _UpsertScheduleSheetState();
 }
 
 class _UpsertScheduleSheetState extends ConsumerState<_UpsertScheduleSheet> {
@@ -1258,35 +1343,51 @@ class _UpsertScheduleSheetState extends ConsumerState<_UpsertScheduleSheet> {
     final time = _time;
 
     if (title.isEmpty) {
-      showMySnackBar(context: context, message: 'Title is required', color: Colors.red);
+      showMySnackBar(
+        context: context,
+        message: 'Title is required',
+        color: Colors.red,
+      );
       return;
     }
     if (date == null) {
-      showMySnackBar(context: context, message: 'Date is required', color: Colors.red);
+      showMySnackBar(
+        context: context,
+        message: 'Date is required',
+        color: Colors.red,
+      );
       return;
     }
     if (time == null) {
-      showMySnackBar(context: context, message: 'Time is required', color: Colors.red);
+      showMySnackBar(
+        context: context,
+        message: 'Time is required',
+        color: Colors.red,
+      );
       return;
     }
 
     final existing = widget.existing;
     final ok = existing == null
-        ? await ref.read(scheduleViewModelProvider.notifier).createSchedule(
-              title: title,
-              date: date,
-              time: _timeKey(time),
-              description: _descriptionController.text,
-              location: _locationController.text,
-            )
-        : await ref.read(scheduleViewModelProvider.notifier).updateSchedule(
-              id: existing.id,
-              title: title,
-              date: date,
-              time: _timeKey(time),
-              description: _descriptionController.text,
-              location: _locationController.text,
-            );
+        ? await ref
+              .read(scheduleViewModelProvider.notifier)
+              .createSchedule(
+                title: title,
+                date: date,
+                time: _timeKey(time),
+                description: _descriptionController.text,
+                location: _locationController.text,
+              )
+        : await ref
+              .read(scheduleViewModelProvider.notifier)
+              .updateSchedule(
+                id: existing.id,
+                title: title,
+                date: date,
+                time: _timeKey(time),
+                description: _descriptionController.text,
+                location: _locationController.text,
+              );
 
     if (!mounted) return;
 
@@ -1298,8 +1399,11 @@ class _UpsertScheduleSheetState extends ConsumerState<_UpsertScheduleSheet> {
         color: const Color(0xFF2D5A44),
       );
     } else {
-      final msg = ref.read(scheduleViewModelProvider).errorMessage ??
-          (widget.existing == null ? 'Failed to add event' : 'Failed to update event');
+      final msg =
+          ref.read(scheduleViewModelProvider).errorMessage ??
+          (widget.existing == null
+              ? 'Failed to add event'
+              : 'Failed to update event');
       showMySnackBar(context: context, message: msg, color: Colors.red);
     }
   }
@@ -1369,13 +1473,17 @@ class _UpsertScheduleSheetState extends ConsumerState<_UpsertScheduleSheet> {
             const SizedBox(height: 10),
             TextField(
               controller: _locationController,
-              decoration: const InputDecoration(labelText: 'Location (optional)'),
+              decoration: const InputDecoration(
+                labelText: 'Location (optional)',
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _descriptionController,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Description (optional)'),
+              decoration: const InputDecoration(
+                labelText: 'Description (optional)',
+              ),
             ),
             const SizedBox(height: 14),
             SizedBox(

@@ -186,141 +186,152 @@ class _AdminUserCreateScreenState extends ConsumerState<AdminUserCreateScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // ── Avatar picker header ─────────────────────────────────
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 28),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [kAdminPrimary, kAdminSecondary],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                  ),
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: _showImagePickerSheet,
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            width: 86,
-                            height: 86,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF818CF8), Color(0xFFA78BFA)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                        // ── Avatar picker header ─────────────────────────────────
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 28),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [kAdminPrimary, kAdminSecondary],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: _showImagePickerSheet,
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  Container(
+                                    width: 86,
+                                    height: 86,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 3,
+                                      ),
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF818CF8),
+                                          Color(0xFFA78BFA),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                    ),
+                                    child: ClipOval(
+                                      child: _pickedImage != null
+                                          ? Image.file(
+                                              File(_pickedImage!.path),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : const Icon(
+                                              Icons.person_rounded,
+                                              color: Colors.white,
+                                              size: 44,
+                                            ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt_rounded,
+                                      size: 15,
+                                      color: kAdminPrimary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: ClipOval(
-                              child: _pickedImage != null
-                                  ? Image.file(
-                                      File(_pickedImage!.path),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const Icon(
-                                      Icons.person_rounded,
-                                      color: Colors.white,
-                                      size: 44,
-                                    ),
-                            ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              size: 15,
-                              color: kAdminPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                        ),
 
-                Form(
-                  key: _formKey,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0A000000),
-                            blurRadius: 16,
-                            offset: Offset(0, 4),
+                        Form(
+                          key: _formKey,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0A000000),
+                                    blurRadius: 16,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  _FieldTile(
+                                    icon: Icons.person_outline_rounded,
+                                    label: 'Full Name',
+                                    controller: _fullNameCtrl,
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                  ),
+                                  const _TileDivider(),
+                                  _FieldTile(
+                                    icon: Icons.email_outlined,
+                                    label: 'Email',
+                                    controller: _emailCtrl,
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                  ),
+                                  const _TileDivider(),
+                                  _FieldTile(
+                                    icon: Icons.alternate_email_rounded,
+                                    label: 'Username',
+                                    controller: _usernameCtrl,
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                  ),
+                                  const _TileDivider(),
+                                  _FieldTile(
+                                    icon: Icons.phone_outlined,
+                                    label: 'Phone Number',
+                                    controller: _phoneCtrl,
+                                    keyboardType: TextInputType.phone,
+                                  ),
+                                  const _TileDivider(),
+                                  _FieldTile(
+                                    icon: Icons.lock_outline_rounded,
+                                    label: 'Password',
+                                    controller: _passwordCtrl,
+                                    obscureText: true,
+                                    validator: (v) => (v == null || v.isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                  ),
+                                  const _TileDivider(),
+                                  _FieldTile(
+                                    icon: Icons.lock_reset_rounded,
+                                    label: 'Confirm Password',
+                                    controller: _confirmPasswordCtrl,
+                                    obscureText: true,
+                                    validator: (v) => (v == null || v.isEmpty)
+                                        ? 'Required'
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _FieldTile(
-                            icon: Icons.person_outline_rounded,
-                            label: 'Full Name',
-                            controller: _fullNameCtrl,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Required'
-                                : null,
-                          ),
-                          const _TileDivider(),
-                          _FieldTile(
-                            icon: Icons.email_outlined,
-                            label: 'Email',
-                            controller: _emailCtrl,
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Required'
-                                : null,
-                          ),
-                          const _TileDivider(),
-                          _FieldTile(
-                            icon: Icons.alternate_email_rounded,
-                            label: 'Username',
-                            controller: _usernameCtrl,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Required'
-                                : null,
-                          ),
-                          const _TileDivider(),
-                          _FieldTile(
-                            icon: Icons.phone_outlined,
-                            label: 'Phone Number',
-                            controller: _phoneCtrl,
-                            keyboardType: TextInputType.phone,
-                          ),
-                          const _TileDivider(),
-                          _FieldTile(
-                            icon: Icons.lock_outline_rounded,
-                            label: 'Password',
-                            controller: _passwordCtrl,
-                            obscureText: true,
-                            validator: (v) =>
-                                (v == null || v.isEmpty) ? 'Required' : null,
-                          ),
-                          const _TileDivider(),
-                          _FieldTile(
-                            icon: Icons.lock_reset_rounded,
-                            label: 'Confirm Password',
-                            controller: _confirmPasswordCtrl,
-                            obscureText: true,
-                            validator: (v) =>
-                                (v == null || v.isEmpty) ? 'Required' : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                        ),
 
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),

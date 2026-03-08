@@ -107,7 +107,9 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
                         onPressed: () {
                           _searchController.clear();
                           ref
-                              .read(adminUsersViewModelProvider.notifier)
+                              .read(
+                                        adminUsersViewModelProvider.notifier,
+                                      )
                               .fetchUsers(page: 1, search: '');
                         },
                       )
@@ -121,11 +123,14 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
               onChanged: (value) {
                 setState(() {});
                 _debounce?.cancel();
-                _debounce = Timer(const Duration(milliseconds: 350), () {
-                  ref
-                      .read(adminUsersViewModelProvider.notifier)
-                      .fetchUsers(page: 1, search: value);
-                });
+                _debounce = Timer(
+                          const Duration(milliseconds: 350),
+                          () {
+                    ref
+                        .read(adminUsersViewModelProvider.notifier)
+                        .fetchUsers(page: 1, search: value);
+                  },
+                        );
               },
             ),
           ),
@@ -153,7 +158,9 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
               if (state.status == AdminUsersStatus.loading &&
                   state.users.isEmpty) {
                 return const Center(
-                  child: CircularProgressIndicator(color: kAdminPrimary),
+                  child: CircularProgressIndicator(
+                            color: kAdminPrimary,
+                          ),
                 );
               }
 
@@ -176,7 +183,8 @@ class _AdminUsersTabState extends ConsumerState<AdminUsersTab> {
                 child: ListView.separated(
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  itemCount: state.users.length + (state.isLoadingMore ? 1 : 0),
+                  itemCount: state.users.length +
+                              (state.isLoadingMore ? 1 : 0),
                   separatorBuilder: (context, index) =>
                       const SizedBox(height: 10),
                   itemBuilder: (context, index) {

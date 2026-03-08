@@ -132,6 +132,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                   backgroundColor: const Color(0xFFF4F1EA),
                   elevation: 0,
                   scrolledUnderElevation: 0,
+                  iconTheme: const IconThemeData(color: Color(0xFF1F2A22)),
                   titleSpacing: 16,
                   title: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,23 +244,37 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                         ),
                       )
                     : null,
-                body: Column(
-                  children: [
-                    if (savingAny)
-                      const LinearProgressIndicator(
-                        minHeight: 2,
-                        color: Color(0xFF2D5A44),
-                        backgroundColor: Color(0xFFEAF1ED),
+                body: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isTablet = constraints.maxWidth >= 900;
+
+                    return Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isTablet ? 980 : double.infinity,
+                        ),
+                        child: Column(
+                          children: [
+                            if (savingAny)
+                              const LinearProgressIndicator(
+                                minHeight: 2,
+                                color: Color(0xFF2D5A44),
+                                backgroundColor: Color(0xFFEAF1ED),
+                              ),
+                            Expanded(
+                              child: TabBarView(
+                                children: [
+                                  _RemindersBody(state: reminderState),
+                                  _NotificationsBody(state: notificationState),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _RemindersBody(state: reminderState),
-                          _NotificationsBody(state: notificationState),
-                        ],
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               );
             },

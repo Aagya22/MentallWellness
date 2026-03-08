@@ -164,154 +164,160 @@ class _AdminUserDetailScreenState extends ConsumerState<AdminUserDetailScreen> {
             return SingleChildScrollView(
               child: Column(
                 children: [
-                  // ── Profile banner ──────────────────────────────────
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [kAdminPrimary, kAdminSecondary],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 86,
-                          height: 86,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
-                            gradient: avatar == null
-                                ? const LinearGradient(
-                                    colors: [
-                                      Color(0xFF818CF8),
-                                      Color(0xFFA78BFA),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  )
-                                : null,
+                          // ── Profile banner ──────────────────────────────────
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [kAdminPrimary, kAdminSecondary],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 86,
+                                  height: 86,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                    gradient: avatar == null
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Color(0xFF818CF8),
+                                              Color(0xFFA78BFA),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : null,
+                                  ),
+                                  child: ClipOval(
+                                    child: avatar != null
+                                        ? Image(
+                                            image: avatar,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Center(
+                                            child: Text(
+                                              initials,
+                                              style: const TextStyle(
+                                                fontSize: 34,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  user.fullName,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    user.role.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isAdmin
+                                          ? const Color(0xFFDDD6FE)
+                                          : const Color(0xFFBBF7D0),
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: ClipOval(
-                            child: avatar != null
-                                ? Image(image: avatar, fit: BoxFit.cover)
-                                : Center(
-                                    child: Text(
-                                      initials,
-                                      style: const TextStyle(
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+
+                          // ── Info card ───────────────────────────────────────
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0A000000),
+                                    blurRadius: 16,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  _InfoRow(
+                                    icon: Icons.email_outlined,
+                                    label: 'Email',
+                                    value: user.email,
+                                  ),
+                                  const Divider(height: 1, indent: 62),
+                                  _InfoRow(
+                                    icon: Icons.alternate_email_rounded,
+                                    label: 'Username',
+                                    value: '@${user.username}',
+                                  ),
+                                  const Divider(height: 1, indent: 62),
+                                  _InfoRow(
+                                    icon: Icons.phone_outlined,
+                                    label: 'Phone',
+                                    value: user.phoneNumber.isNotEmpty
+                                        ? user.phoneNumber
+                                        : '—',
+                                  ),
+                                  const Divider(height: 1, indent: 62),
+                                  _InfoRow(
+                                    icon: Icons.shield_outlined,
+                                    label: 'Role',
+                                    value: user.role,
+                                    trailing: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isAdmin
+                                            ? const Color(0xFFEDE9FE)
+                                            : const Color(0xFFDCFCE7),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        user.role.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: isAdmin
+                                              ? kAdminSecondary
+                                              : const Color(0xFF16A34A),
+                                        ),
                                       ),
                                     ),
                                   ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          user.fullName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            user.role.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: isAdmin
-                                  ? const Color(0xFFDDD6FE)
-                                  : const Color(0xFFBBF7D0),
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ── Info card ───────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x0A000000),
-                            blurRadius: 16,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _InfoRow(
-                            icon: Icons.email_outlined,
-                            label: 'Email',
-                            value: user.email,
-                          ),
-                          const Divider(height: 1, indent: 62),
-                          _InfoRow(
-                            icon: Icons.alternate_email_rounded,
-                            label: 'Username',
-                            value: '@${user.username}',
-                          ),
-                          const Divider(height: 1, indent: 62),
-                          _InfoRow(
-                            icon: Icons.phone_outlined,
-                            label: 'Phone',
-                            value: user.phoneNumber.isNotEmpty
-                                ? user.phoneNumber
-                                : '—',
-                          ),
-                          const Divider(height: 1, indent: 62),
-                          _InfoRow(
-                            icon: Icons.shield_outlined,
-                            label: 'Role',
-                            value: user.role,
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isAdmin
-                                    ? const Color(0xFFEDE9FE)
-                                    : const Color(0xFFDCFCE7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                user.role.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isAdmin
-                                      ? kAdminSecondary
-                                      : const Color(0xFF16A34A),
-                                ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),

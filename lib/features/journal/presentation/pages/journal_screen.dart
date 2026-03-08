@@ -172,181 +172,228 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: _SearchBar(
-                controller: _searchController,
-                onSearch: () =>
-                    notifier.fetchJournals(q: _searchController.text),
-                onClear: () {
-                  _searchController.clear();
-                  notifier.fetchJournals();
-                },
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () =>
-                    notifier.fetchJournals(q: _searchController.text),
-                child: Builder(
-                  builder: (context) {
-                    if (state.passcodeRequired == true) {
-                      return ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        children: [
-                          _EmptyStateCard(
-                            icon: Icons.lock_outline,
-                            title: 'Journal is locked',
-                            subtitle:
-                                'Enter your passcode to view your entries.',
-                            ctaText: 'Unlock journal',
-                            onTap: () {
-                              _showUnlockDialog();
-                            },
-                          ),
-                        ],
-                      );
-                    }
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isTablet = constraints.maxWidth >= 900;
 
-                    if (state.status == JournalStatus.loading &&
-                        state.journals.isEmpty) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF2D5A44),
-                        ),
-                      );
-                    }
-
-                    if (state.journals.isEmpty) {
-                      return ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        children: [
-                          _EmptyStateCard(
-                            title: 'No journal entries yet',
-                            subtitle:
-                                'Write something about today and track your progress over time.',
-                            ctaText: 'Write your first entry',
-                            onTap: () async {
-                              final ok = await Navigator.of(context).push<bool>(
-                                MaterialPageRoute(
-                                  builder: (_) => const _JournalEditorScreen(),
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 960 : double.infinity,
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: _SearchBar(
+                        controller: _searchController,
+                        onSearch: () =>
+                            notifier.fetchJournals(q: _searchController.text),
+                        onClear: () {
+                          _searchController.clear();
+                          notifier.fetchJournals();
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () =>
+                            notifier.fetchJournals(q: _searchController.text),
+                        child: Builder(
+                          builder: (context) {
+                            if (state.passcodeRequired == true) {
+                              return ListView(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  16,
                                 ),
-                              );
-                              if (ok == true && mounted) {
-                                await notifier.fetchJournals();
-                              }
-                            },
-                          ),
-                        ],
-                      );
-                    }
-
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      itemCount:
-                          state.journals.length +
-                          ((state.status == JournalStatus.loading ||
-                                      state.status == JournalStatus.saving) &&
-                                  state.journals.isNotEmpty
-                              ? 1
-                              : 0),
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        if (index >= state.journals.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF2D5A44),
-                              ),
-                            ),
-                          );
-                        }
-
-                        final entry = state.journals[index];
-                        return _JournalEntryCard(
-                          position: index,
-                          entry: entry,
-                          onTap: () async {
-                            final changed = await Navigator.of(context)
-                                .push<bool>(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        _JournalEntryScreen(entry: entry),
-                                  ),
-                                );
-                            if (changed == true && mounted) {
-                              await notifier.fetchJournals(
-                                q: _searchController.text,
-                              );
-                            }
-                          },
-                          onEdit: () async {
-                            final ok = await Navigator.of(context).push<bool>(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    _JournalEditorScreen(existing: entry),
-                              ),
-                            );
-                            if (ok == true && mounted) {
-                              await notifier.fetchJournals(
-                                q: _searchController.text,
-                              );
-                            }
-                          },
-                          onDelete: () async {
-                            final messenger = ScaffoldMessenger.of(context);
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (dialogContext) => AlertDialog(
-                                title: const Text(
-                                  'Delete entry?',
-                                  style: TextStyle(fontFamily: 'Inter Bold'),
-                                ),
-                                content: const Text(
-                                  'This cannot be undone.',
-                                  style: TextStyle(fontFamily: 'Inter Regular'),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(dialogContext, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(dialogContext, true),
-                                    child: const Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
+                                children: [
+                                  _EmptyStateCard(
+                                    icon: Icons.lock_outline,
+                                    title: 'Journal is locked',
+                                    subtitle:
+                                        'Enter your passcode to view your entries.',
+                                    ctaText: 'Unlock journal',
+                                    onTap: () {
+                                      _showUnlockDialog();
+                                    },
                                   ),
                                 ],
-                              ),
-                            );
-
-                            if (!mounted) return;
-
-                            if (confirmed != true) return;
-                            final ok = await notifier.deleteEntry(id: entry.id);
-                            if (!mounted) return;
-                            if (ok) {
-                              messenger.showSnackBar(
-                                const SnackBar(content: Text('Entry deleted')),
                               );
                             }
+
+                            if (state.status == JournalStatus.loading &&
+                                state.journals.isEmpty) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF2D5A44),
+                                ),
+                              );
+                            }
+
+                            if (state.journals.isEmpty) {
+                              return ListView(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  16,
+                                ),
+                                children: [
+                                  _EmptyStateCard(
+                                    title: 'No journal entries yet',
+                                    subtitle:
+                                        'Write something about today and track your progress over time.',
+                                    ctaText: 'Write your first entry',
+                                    onTap: () async {
+                                      final ok = await Navigator.of(context)
+                                          .push<bool>(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const _JournalEditorScreen(),
+                                            ),
+                                          );
+                                      if (ok == true && mounted) {
+                                        await notifier.fetchJournals();
+                                      }
+                                    },
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              itemCount:
+                                  state.journals.length +
+                                  ((state.status == JournalStatus.loading ||
+                                              state.status ==
+                                                  JournalStatus.saving) &&
+                                          state.journals.isNotEmpty
+                                      ? 1
+                                      : 0),
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                if (index >= state.journals.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF2D5A44),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                final entry = state.journals[index];
+                                return _JournalEntryCard(
+                                  position: index,
+                                  entry: entry,
+                                  onTap: () async {
+                                    final changed = await Navigator.of(context)
+                                        .push<bool>(
+                                          MaterialPageRoute(
+                                            builder: (_) => _JournalEntryScreen(
+                                              entry: entry,
+                                            ),
+                                          ),
+                                        );
+                                    if (changed == true && mounted) {
+                                      await notifier.fetchJournals(
+                                        q: _searchController.text,
+                                      );
+                                    }
+                                  },
+                                  onEdit: () async {
+                                    final ok = await Navigator.of(context)
+                                        .push<bool>(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                _JournalEditorScreen(
+                                                  existing: entry,
+                                                ),
+                                          ),
+                                        );
+                                    if (ok == true && mounted) {
+                                      await notifier.fetchJournals(
+                                        q: _searchController.text,
+                                      );
+                                    }
+                                  },
+                                  onDelete: () async {
+                                    final messenger = ScaffoldMessenger.of(
+                                      context,
+                                    );
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (dialogContext) => AlertDialog(
+                                        title: const Text(
+                                          'Delete entry?',
+                                          style: TextStyle(
+                                            fontFamily: 'Inter Bold',
+                                          ),
+                                        ),
+                                        content: const Text(
+                                          'This cannot be undone.',
+                                          style: TextStyle(
+                                            fontFamily: 'Inter Regular',
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                              dialogContext,
+                                              false,
+                                            ),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(
+                                              dialogContext,
+                                              true,
+                                            ),
+                                            child: const Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (!mounted) return;
+
+                                    if (confirmed != true) return;
+                                    final ok = await notifier.deleteEntry(
+                                      id: entry.id,
+                                    );
+                                    if (!mounted) return;
+                                    if (ok) {
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Entry deleted'),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                );
+                              },
+                            );
                           },
-                        );
-                      },
-                    );
-                  },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

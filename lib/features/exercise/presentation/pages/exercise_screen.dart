@@ -196,12 +196,25 @@ class _ExerciseScreenState extends ConsumerState<ExerciseScreen>
               backgroundColor: Color(0xFFEAF1ED),
             ),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _ExploreTab(onOpenGuided: _openGuidedSession),
-                _HistoryTab(state: state),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isTablet = constraints.maxWidth >= 900;
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isTablet ? 980 : double.infinity,
+                    ),
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _ExploreTab(onOpenGuided: _openGuidedSession),
+                        _HistoryTab(state: state),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],

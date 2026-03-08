@@ -205,92 +205,112 @@ class _NotificationCenterScreenState
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: const Color(0xFF2D5A44),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            if (isBusy)
-              const SliverToBoxAdapter(
-                child: LinearProgressIndicator(
-                  minHeight: 2,
-                  color: Color(0xFF2D5A44),
-                  backgroundColor: Color(0xFFEAF1ED),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isTablet = constraints.maxWidth >= 900;
+
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 980 : double.infinity,
                 ),
-              ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                child: _SummaryCard(
-                  totalCount: notifications.length,
-                  unreadCount: unreadCount,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Row(
-                  children: [
-                    _FilterChip(
-                      label: 'All',
-                      selected: !_showUnreadOnly,
-                      onTap: () => setState(() => _showUnreadOnly = false),
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    if (isBusy)
+                      const SliverToBoxAdapter(
+                        child: LinearProgressIndicator(
+                          minHeight: 2,
+                          color: Color(0xFF2D5A44),
+                          backgroundColor: Color(0xFFEAF1ED),
+                        ),
+                      ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                        child: _SummaryCard(
+                          totalCount: notifications.length,
+                          unreadCount: unreadCount,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 10),
-                    _FilterChip(
-                      label: 'Unread',
-                      selected: _showUnreadOnly,
-                      onTap: () => setState(() => _showUnreadOnly = true),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Row(
+                          children: [
+                            _FilterChip(
+                              label: 'All',
+                              selected: !_showUnreadOnly,
+                              onTap: () =>
+                                  setState(() => _showUnreadOnly = false),
+                            ),
+                            const SizedBox(width: 10),
+                            _FilterChip(
+                              label: 'Unread',
+                              selected: _showUnreadOnly,
+                              onTap: () =>
+                                  setState(() => _showUnreadOnly = true),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                    if (isLoadingEmpty)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF2D5A44),
+                          ),
+                        ),
+                      )
+                    else if (visibleNotifications.isEmpty)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _EmptyNotificationsState(),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        sliver: SliverList.separated(
+                          itemCount: visibleNotifications.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final item = visibleNotifications[index];
+                            return _NotificationCard(
+                              notification: item,
+                              onTap: () {
+                                if (!item.isRead) {
+                                  ref
+                                      .read(
+                                        reminderNotificationsViewModelProvider
+                                            .notifier,
+                                      )
+                                      .markRead(id: item.id);
+                                }
+                              },
+                              onMarkRead: item.isRead
+                                  ? null
+                                  : () {
+                                      ref
+                                          .read(
+                                            reminderNotificationsViewModelProvider
+                                                .notifier,
+                                          )
+                                          .markRead(id: item.id);
+                                    },
+                            );
+                          },
+                        ),
+                      ),
                   ],
                 ),
               ),
-            ),
-            if (isLoadingEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF2D5A44)),
-                ),
-              )
-            else if (visibleNotifications.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyNotificationsState(),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                sliver: SliverList.separated(
-                  itemCount: visibleNotifications.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final item = visibleNotifications[index];
-                    return _NotificationCard(
-                      notification: item,
-                      onTap: () {
-                        if (!item.isRead) {
-                          ref
-                              .read(
-                                reminderNotificationsViewModelProvider.notifier,
-                              )
-                              .markRead(id: item.id);
-                        }
-                      },
-                      onMarkRead: item.isRead
-                          ? null
-                          : () {
-                              ref
-                                  .read(
-                                    reminderNotificationsViewModelProvider
-                                        .notifier,
-                                  )
-                                  .markRead(id: item.id);
-                            },
-                    );
-                  },
-                ),
-              ),
-          ],
+            );
+          },
         ),
       ),
     );

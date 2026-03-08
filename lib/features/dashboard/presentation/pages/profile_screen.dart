@@ -335,182 +335,217 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFDCE7E1)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1F2A22).withValues(alpha: 0.06),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _isEditing ? _showImagePickerSheet : null,
-                        child: Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 56,
-                              backgroundColor: Colors.grey.shade200,
-                              backgroundImage: _getProfileImage(),
-                              child:
-                                  _pickedImage == null &&
-                                      (_storedProfilePictureUrl == null ||
-                                          _storedProfilePictureUrl!.isEmpty)
-                                  ? const Icon(
-                                      Icons.camera_alt,
-                                      size: 36,
-                                      color: Colors.grey,
-                                    )
-                                  : null,
-                            ),
-                            if (_isEditing && _pickedImage != null)
-                              Positioned(
-                                right: 0,
-                                bottom: 0,
-                                child: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: Colors.red,
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 12,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isTablet = constraints.maxWidth >= 900;
+
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 860 : double.infinity,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(color: const Color(0xFFDCE7E1)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF1F2A22,
+                                ).withValues(alpha: 0.06),
+                                blurRadius: 14,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              GestureDetector(
+                                onTap: _isEditing
+                                    ? _showImagePickerSheet
+                                    : null,
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 56,
+                                      backgroundColor: Colors.grey.shade200,
+                                      backgroundImage: _getProfileImage(),
+                                      child:
+                                          _pickedImage == null &&
+                                              (_storedProfilePictureUrl ==
+                                                      null ||
+                                                  _storedProfilePictureUrl!
+                                                      .isEmpty)
+                                          ? const Icon(
+                                              Icons.camera_alt,
+                                              size: 36,
+                                              color: Colors.grey,
+                                            )
+                                          : null,
                                     ),
-                                    onPressed: () =>
-                                        setState(() => _pickedImage = null),
-                                    padding: EdgeInsets.zero,
-                                  ),
+                                    if (_isEditing && _pickedImage != null)
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: Colors.red,
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 12,
+                                            ),
+                                            onPressed: () => setState(
+                                              () => _pickedImage = null,
+                                            ),
+                                            padding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        displayName,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'Inter Bold',
-                          fontSize: 20,
-                          color: Color(0xFF1F2A22),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        displayEmail,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'Inter Regular',
-                          fontSize: 13,
-                          color: Color(0xFF5D6A62),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_isEditing)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _showImagePickerSheet,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2D5A44),
-                            side: const BorderSide(color: Color(0xFFBCD0C4)),
+                              const SizedBox(height: 14),
+                              Text(
+                                displayName,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter Bold',
+                                  fontSize: 20,
+                                  color: Color(0xFF1F2A22),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                displayEmail,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter Regular',
+                                  fontSize: 13,
+                                  color: Color(0xFF5D6A62),
+                                ),
+                              ),
+                            ],
                           ),
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          label: const Text('Update picture'),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: hasProfilePicture
-                              ? _deleteProfilePicture
-                              : null,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF8B2E2E),
-                            side: const BorderSide(color: Color(0xFFD8BDBD)),
+                        if (_isEditing)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 10,
+                              runSpacing: 8,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: _showImagePickerSheet,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF2D5A44),
+                                    side: const BorderSide(
+                                      color: Color(0xFFBCD0C4),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Update picture'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: hasProfilePicture
+                                      ? _deleteProfilePicture
+                                      : null,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF8B2E2E),
+                                    side: const BorderSide(
+                                      color: Color(0xFFD8BDBD),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Delete picture'),
+                                ),
+                              ],
+                            ),
                           ),
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          label: const Text('Delete picture'),
+                        const SizedBox(height: 18),
+                        const Text(
+                          'Account details',
+                          style: TextStyle(
+                            fontFamily: 'Inter Bold',
+                            fontSize: 16,
+                            color: Color(0xFF1F2A22),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFDCE7E1)),
+                          ),
+                          child: Column(
+                            children: [
+                              _field('Full Name', _nameCtrl),
+                              _field('Email', _emailCtrl),
+                              _field('Username', _usernameCtrl),
+                              _field(
+                                'Phone',
+                                _phoneCtrl,
+                                keyboard: TextInputType.phone,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: Icon(
+                              _isEditing
+                                  ? Icons.save_outlined
+                                  : Icons.lock_outline,
+                            ),
+                            label: Text(
+                              _isEditing
+                                  ? 'Save changes'
+                                  : 'Enable edit mode to save',
+                            ),
+                            onPressed: _isEditing ? _saveProfile : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2D5A44),
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: const Color(0xFFB8C5BD),
+                              disabledForegroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Account details',
-                  style: TextStyle(
-                    fontFamily: 'Inter Bold',
-                    fontSize: 16,
-                    color: Color(0xFF1F2A22),
-                  ),
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFDCE7E1)),
-                  ),
-                  child: Column(
-                    children: [
-                      _field('Full Name', _nameCtrl),
-                      _field('Email', _emailCtrl),
-                      _field('Username', _usernameCtrl),
-                      _field(
-                        'Phone',
-                        _phoneCtrl,
-                        keyboard: TextInputType.phone,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: Icon(
-                      _isEditing ? Icons.save_outlined : Icons.lock_outline,
-                    ),
-                    label: Text(
-                      _isEditing ? 'Save changes' : 'Enable edit mode to save',
-                    ),
-                    onPressed: _isEditing ? _saveProfile : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D5A44),
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFB8C5BD),
-                      disabledForegroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

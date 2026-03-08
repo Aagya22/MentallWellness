@@ -35,6 +35,36 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
         ? ApiEndpoints.getImageUrl(profilePicturePath)
         : null;
     final state = ref.watch(adminDashboardViewModelProvider);
+    final statCards = <Widget>[
+      _StatCard(
+        label: 'Total Users',
+        value: state.totalUsers,
+        icon: Icons.people_alt_rounded,
+        accent: const Color(0xFF3B82F6),
+        bgAccent: const Color(0xFFEFF6FF),
+      ),
+      _StatCard(
+        label: 'Regular Users',
+        value: state.regularUsers,
+        icon: Icons.person_rounded,
+        accent: const Color(0xFF10B981),
+        bgAccent: const Color(0xFFECFDF5),
+      ),
+      _StatCard(
+        label: 'Administrators',
+        value: state.totalAdmins,
+        icon: Icons.admin_panel_settings_rounded,
+        accent: kAdminSecondary,
+        bgAccent: const Color(0xFFF5F3FF),
+      ),
+      _StatCard(
+        label: 'New (30 days)',
+        value: state.recentUsers30Days,
+        icon: Icons.trending_up_rounded,
+        accent: const Color(0xFFF59E0B),
+        bgAccent: const Color(0xFFFFFBEB),
+      ),
+    ];
 
     if (state.status == AdminDashboardStatus.error) {
       return _ErrorView(
@@ -69,43 +99,29 @@ class _AdminDashboardTabState extends ConsumerState<AdminDashboardTab> {
           // ── Stats grid ────────────────────────────────────────────────
           _SectionLabel(label: 'Overview'),
           const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.55,
-            children: [
-              _StatCard(
-                label: 'Total Users',
-                value: state.totalUsers,
-                icon: Icons.people_alt_rounded,
-                accent: const Color(0xFF3B82F6),
-                bgAccent: const Color(0xFFEFF6FF),
-              ),
-              _StatCard(
-                label: 'Regular Users',
-                value: state.regularUsers,
-                icon: Icons.person_rounded,
-                accent: const Color(0xFF10B981),
-                bgAccent: const Color(0xFFECFDF5),
-              ),
-              _StatCard(
-                label: 'Administrators',
-                value: state.totalAdmins,
-                icon: Icons.admin_panel_settings_rounded,
-                accent: kAdminSecondary,
-                bgAccent: const Color(0xFFF5F3FF),
-              ),
-              _StatCard(
-                label: 'New (30 days)',
-                value: state.recentUsers30Days,
-                icon: Icons.trending_up_rounded,
-                accent: const Color(0xFFF59E0B),
-                bgAccent: const Color(0xFFFFFBEB),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final crossAxisCount = width >= 1200
+                  ? 4
+                  : width >= 820
+                  ? 3
+                  : 2;
+              final tileHeight = width >= 1200 ? 150.0 : 144.0;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: statCards.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  mainAxisExtent: tileHeight,
+                ),
+                itemBuilder: (context, index) => statCards[index],
+              );
+            },
           ),
           const SizedBox(height: 24),
 
