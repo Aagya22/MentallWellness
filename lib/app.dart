@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mentalwellness/features/landing/presentation/pages/Landing_screen.dart';
 import 'package:mentalwellness/features/auth/presentation/pages/Login_screen.dart';
 import 'package:mentalwellness/features/auth/presentation/pages/Register_screen.dart';
+import 'package:mentalwellness/features/auth/presentation/pages/forgot_password_screen.dart';
+import 'package:mentalwellness/features/auth/presentation/pages/reset_password_screen.dart';
 import 'package:mentalwellness/features/splash/presentation/pages/Splash_screen.dart';
 import 'package:mentalwellness/features/dashboard/presentation/pages/botton_navigation_screen.dart';
 import 'package:mentalwellness/features/onboarding/presentation/pages/onboarding2nd_screen.dart';
@@ -33,6 +35,8 @@ class App extends StatelessWidget {
         '/LandingScreen': (context) => const LandingScreen(),
         '/LoginScreen': (context) => const LoginScreen(),
         '/RegisterScreen': (context) => const RegisterScreen(),
+        '/ForgotPasswordScreen': (context) => const ForgotPasswordScreen(),
+        '/ResetPasswordScreen': (context) => const ResetPasswordScreen(),
         '/ChangePasswordScreen': (context) => const ChangePasswordScreen(),
         '/BottomNavigationScreen': (context) => const BottomNavigationScreen(),
         '/AdminDashboardScreen': (context) => const AdminDashboardScreen(),
